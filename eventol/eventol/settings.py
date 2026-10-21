@@ -397,7 +397,7 @@ class Base(Configuration):
     }
     LIST_PER_PAGE = int(env('LIST_PER_PAGE'))
     ModelAdmin.list_per_page = LIST_PER_PAGE
-    CELERY_ENABLED = env('CELERY_ENABLED')
+    CELERY_ENABLED = env.get_value('CELERY_ENABLED', cast=bool, parse_default=True)
 
     MAP_WIDGETS = {
         'Leaflet': {
