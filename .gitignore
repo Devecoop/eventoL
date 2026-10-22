@@ -42,6 +42,7 @@ eventol/conf/locale/**/*.mo
 *~
 
 #My files
+/CONTEXTO.md
 my_settings.py
 deploy.txt
 eventol/manager/static/manager/css/eventol-bootstrap.css

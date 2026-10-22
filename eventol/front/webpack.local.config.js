@@ -29,6 +29,7 @@ config.devtool = '#eval-source-map';
 // Use webpack dev server
 config.entry = {
   Home: addDevVendors('./src/views/Home'),
+  HomeTemplates: addDevVendors('./src/libs/home'),
   EventHome: addDevVendors('./src/views/EventHome'),
   InstanceDetails: addDevVendors('./src/views/InstanceDetails'),
   Report: addDevVendors('./src/views/Report'),

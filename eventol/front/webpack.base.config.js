@@ -21,6 +21,7 @@ module.exports = {
 
   entry: {
     Home: './src/views/Home',
+    HomeTemplates: './src/libs/home',
     EventHome: './src/views/EventHome',
     InstanceDetails: './src/views/InstanceDetails',
     Report: './src/views/Report',
