@@ -44,6 +44,7 @@ admin.autodiscover()
 
 urlpatterns = [
     re_path(r'^$', views.home, name='home'),
+    re_path(r'^home/search/$', views.home_search, name='home_search'),
     re_path(r'^api/', include(router.urls)),
     re_path(r'^instance_details$', views.instance_details, name='instance_details'),
     re_path(r'^report$', views.generic_report, name='generic_report'),

@@ -61,6 +61,8 @@ eventol/conf/locale/**/*.mo
 coverage/
 data/
 db.sqlite3
+/CONTEXTO.md
+my_settings.py
 deploy.txt
 deploy/docker/.env
 deploy/docker/db/
