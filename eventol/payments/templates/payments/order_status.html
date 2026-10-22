@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block page-header %}{% trans "Your order" %}{% endblock %}
+{% block content %}
+    <div class="card" id="order-status" data-status="{{ order.status }}"
+         data-poll-url="{% url 'payments_order_status' order.id %}?format=json">
+        <h4>{{ event.name }}</h4>
+        <p>
+            {% blocktrans count counter=order.quantity with total=order.total currency=order.currency %}
+                {{ counter }} ticket - total {{ currency }} {{ total }}
+            {% plural %}
+                {{ counter }} tickets - total {{ currency }} {{ total }}
+            {% endblocktrans %}
+        </p>
+        {% if order.is_paid %}
+            <h4><b class="fa fa-check-circle"></b> {% trans "Payment approved!" %}</h4>
+            {% if order.status == 'approved_over_quota' %}
+                <p>{% trans "Your payment arrived after the tickets ran out. The organizers will contact you." %}</p>
+            {% else %}
+                <p>{% blocktrans with email=order.buyer_email %}You will receive your tickets at {{ email }}.{% endblocktrans %}</p>
+            {% endif %}
+        {% elif order.status == 'refunded' %}
+            <h4><b class="fa fa-undo"></b> {% trans "This order was refunded." %}</h4>
+        {% else %}
+            <h4><b class="fa fa-clock-o"></b> {% trans "We are waiting for the payment confirmation." %}</h4>
+            <p>{% trans "This page will update automatically." %}</p>
+            {% if order.init_point %}
+                <p><a href="{{ order.init_point }}">{% trans "Go to Mercado Pago to pay" %}</a></p>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
+{% block other-script %}
+    {% if not order.is_paid and order.status != 'refunded' %}
+        <script>
+            (function () {
+                var element = document.getElementById('order-status');
+                var poll = function () {
+                    fetch(element.dataset.pollUrl).then(function (response) {
+                        return response.json();
+                    }).then(function (data) {
+                        if (data.status !== element.dataset.status) {
+                            window.location.reload();
+                        }
+                    });
+                };
+                setInterval(poll, 5000);
+            })();
+        </script>
+    {% endif %}
+{% endblock %}
