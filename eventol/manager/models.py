@@ -158,6 +158,20 @@ class Event(models.Model):
     registration_closed = models.BooleanField(
         default=False, help_text=_('set it to True to force the registration to be closed')
     )
+    is_paid = models.BooleanField(
+        _('Is paid'),
+        default=False,
+        help_text=_('Attendees buy their tickets with Mercado Pago'),
+    )
+    ticket_price = models.DecimalField(
+        _('Ticket price'), max_digits=10, decimal_places=2, blank=True, null=True
+    )
+    ticket_quota = models.PositiveIntegerField(
+        _('Ticket quota'),
+        blank=True,
+        null=True,
+        help_text=_('Maximum number of tickets for sale. Leave empty for no limit'),
+    )
 
     tags = models.ManyToManyField(
         EventTag, blank=True, help_text=_('Select tags to show this event in the EventTag landing')
@@ -435,9 +449,18 @@ class Ticket(models.Model):
         verbose_name=_('number'),
         help_text=_('Unique identifier for the ticket'),
     )
+    cancelled = models.BooleanField(
+        _('Cancelled'), default=False, help_text=_('A cancelled ticket does not allow entry')
+    )
+    cancelled_at = models.DateTimeField(_('Cancelled At'), blank=True, null=True)
 
     def __str__(self):
         return self.code
+
+    def cancel(self):
+        self.cancelled = True
+        self.cancelled_at = timezone.now()
+        self.save(update_fields=['cancelled', 'cancelled_at', 'updated_at'])
 
 
 class EventUserManager(models.Manager):
@@ -692,6 +715,8 @@ class Attendee(models.Model):
     last_name = models.CharField(_('Last Name'), max_length=200, blank=True, null=True)
     nickname = models.CharField(_('Nickname'), max_length=200, blank=True, null=True)
     email = models.EmailField(_('Email'))
+    dni = models.CharField(_('DNI'), max_length=20, blank=True, null=True)
+    phone = models.CharField(_('Phone'), max_length=50, blank=True, null=True)
     event = models.ForeignKey(Event, verbose_name=_('Event'), on_delete=models.CASCADE)
     ticket = models.ForeignKey(
         Ticket, verbose_name=_('Ticket'), blank=True, null=True, on_delete=models.CASCADE
@@ -723,12 +748,24 @@ class Attendee(models.Model):
     class Meta:
         verbose_name = _('Attendee')
         verbose_name_plural = _('Attendees')
-        unique_together = (('event', 'email'),)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['event', 'dni'],
+                condition=models.Q(dni__isnull=False),
+                name='unique_attendee_dni_by_event',
+                violation_error_message=_('There is already a ticket for this DNI'),
+            )
+        ]
 
     def __str__(self):
         if self.event_user:
             return str(self.event_user)
         return f'{self.event} - {self.first_name} {self.last_name} - {self.nickname} - {self.email}'
+
+    def save(self, *args, **kwargs):
+        # An empty DNI is stored as NULL so it does not count for the unique constraint
+        self.dni = self.dni or None
+        super().save(*args, **kwargs)
 
     def get_ticket_data(self):
         if self.ticket is None:
