@@ -222,6 +222,21 @@ class EventUserSearchForm(forms.Form):
     )
 
 
+class UniqueAttendeeEmailMixin:  # pylint: disable=too-few-public-methods
+    """An email registers only once by event (the database only checks the DNI)."""
+
+    def validate_unique_email(self, cleaned_data):
+        email = cleaned_data.get('email')
+        event = cleaned_data.get('event')
+        if not email or not event:
+            return
+        attendees = Attendee.objects.filter(event=event, email__iexact=email)
+        if self.instance.pk:
+            attendees = attendees.exclude(pk=self.instance.pk)
+        if attendees.exists():
+            raise forms.ValidationError(_('You are already registered for this event'))
+
+
 class AttendeeRegistrationByCollaboratorForm(forms.ModelForm):
     class Meta:
         model = Attendee
@@ -311,7 +326,7 @@ class CollaboratorRegistrationForm(ModelForm):
         fields = '__all__'
 
 
-class AttendeeRegistrationFromUserForm(ModelForm):
+class AttendeeRegistrationFromUserForm(UniqueAttendeeEmailMixin, ModelForm):
     field_order = [
         'first_name',
         'last_name',
@@ -350,6 +365,11 @@ class AttendeeRegistrationFromUserForm(ModelForm):
             'registration_date': forms.HiddenInput(),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        self.validate_unique_email(cleaned_data)
+        return cleaned_data
+
 
 class EventUserRegistrationForm(ModelForm):
     class Meta:
@@ -358,7 +378,7 @@ class EventUserRegistrationForm(ModelForm):
         widgets = {'event': forms.HiddenInput()}
 
 
-class AttendeeRegistrationForm(ModelForm):
+class AttendeeRegistrationForm(UniqueAttendeeEmailMixin, ModelForm):
     repeat_email = forms.EmailField(label=_('Repeat Email'))
     captcha = CaptchaField()
 
@@ -408,6 +428,7 @@ class AttendeeRegistrationForm(ModelForm):
                 }
             )
 
+        self.validate_unique_email(cleaned_data)
         return cleaned_data
 
 
