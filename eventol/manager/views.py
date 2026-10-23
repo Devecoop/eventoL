@@ -571,6 +571,9 @@ def attendee_registration_by_self(request, event_slug, event_registration_code):
             request, _('The registration code does not seems to be valid for this event')
         )
         return redirect(event_index_url)
+    if event.is_paid:
+        messages.error(request, _('This event is paid: buy your ticket to attend'))
+        return redirect(event_index_url)
     # Check if today is a valid EventDate
     try:
         EventDate.objects.get(event=event, date=timezone.localdate())
@@ -884,6 +887,9 @@ def get_email_confirmation_url(request, event_slug, attendee_id, token):
 
 def attendee_registration(request, event_slug):
     event = get_object_or_404(Event, event_slug=event_slug)
+
+    if event.is_paid:
+        return redirect(reverse('event_purchase', args=[event_slug]))
 
     if not event.registration_is_open or event.registration_closed:
         return render(

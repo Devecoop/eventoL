@@ -102,15 +102,27 @@
               <div class="col-lg-4 col-md-4">
                   <h3><i class="fa fa-usd"></i> <a href="{% url "index" event_slug %}">¿Cuánto cuesta?</a></h3>
 
-                  <p>La entrada al evento es totalmente <strong>¡libre y gratuita!</strong></p>
+                  {% if event.is_paid %}
+                      <p>La entrada cuesta <strong>ARS {{ event.ticket_price }}</strong> y se paga con Mercado Pago.</p>
+                  {% else %}
+                      <p>La entrada al evento es totalmente <strong>¡libre y gratuita!</strong></p>
+                  {% endif %}
               </div>
               <div class="col-lg-4 col-md-4">
-                  <h3><i class="fa fa-pencil"></i> <a href="{% url "attendee_registration" event_slug %}">Anotate!</a>
-                  </h3>
+                  {% if event.is_paid %}
+                      <h3><i class="fa fa-ticket"></i> <a href="{% url "event_purchase" event_slug %}">¡Comprá tu entrada!</a>
+                      </h3>
 
-                  <p>La registración no es obligatoria, pero nos ayuda a prepararnos para recibirte mejor! Si vas a
-                      traer una máquina para instalar, también nos podés decir qué tipo de máquina es, así tenemos
-                      todo listo.</p>
+                      <p>Comprá las entradas para vos y quienes te acompañen. Las recibís por email apenas se
+                          confirma el pago.</p>
+                  {% else %}
+                      <h3><i class="fa fa-pencil"></i> <a href="{% url "attendee_registration" event_slug %}">Anotate!</a>
+                      </h3>
+
+                      <p>La registración no es obligatoria, pero nos ayuda a prepararnos para recibirte mejor! Si vas a
+                          traer una máquina para instalar, también nos podés decir qué tipo de máquina es, así tenemos
+                          todo listo.</p>
+                  {% endif %}
               </div>
           </div>
         {% endif %}
