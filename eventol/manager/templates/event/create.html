@@ -98,6 +98,24 @@
                     </br>
 
                     <div class="row">
+                      <h4>{% trans 'Tickets' %}</h4>
+                      <div class="col-12 form-row">
+                        <div class="col-sm-4">
+                          {% include "form_field.html" with field=form.is_paid only %}
+                        </div>
+                        <div class="col-sm-4">
+                          {% include "form_field.html" with field=form.ticket_price only %}
+                        </div>
+                        <div class="col-sm-4">
+                          {% include "form_field.html" with field=form.ticket_quota only %}
+                        </div>
+                      </div>
+                    </div>
+
+                    </br>
+                    </br>
+
+                    <div class="row">
                       <h4>{% trans 'Activity proposal form text' %}</h4>
                       <div class="col-12">
                         {% include "form_field.html" with field=form.activities_proposal_form_text only %}
