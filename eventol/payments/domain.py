@@ -81,7 +81,8 @@ def available_quota(event, quota, now=None, exclude_order=None):
 def create_order(event, buyer, attendees, unit_price, quota=None):  # noqa: PLR0913
     """Create a pending order, reserve its tickets and create the Mercado Pago preference.
 
-    ``unit_price`` and ``quota`` are given by the caller (the event does not know about prices yet).
+    ``unit_price`` and ``quota`` are given by the caller (``Event.ticket_price`` and
+    ``Event.ticket_quota`` in the purchase view).
     Raises QuotaExceededError, InvalidOrderError, SellerAccountNotConfiguredError or
     services.MercadoPagoError.
     """

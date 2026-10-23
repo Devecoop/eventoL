@@ -32,6 +32,12 @@ def mp_settings(settings):
 
 
 @pytest.fixture
+def captcha_passes(monkeypatch):
+    """django-simple-captcha reads CAPTCHA_TEST_MODE on import: answer 'PASSED' to pass."""
+    monkeypatch.setattr('captcha.conf.settings.CAPTCHA_TEST_MODE', True)
+
+
+@pytest.fixture
 def event(db):  # pylint: disable=unused-argument
     return Event.objects.create(
         name='Gran Pez Fest',
