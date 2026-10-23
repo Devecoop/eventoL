@@ -4,7 +4,7 @@ App autocontenida que cobra órdenes de entradas con **Checkout Pro** en modo **
 - la cuenta vendedora (por ejemplo, Gran Pez) recibe el pago;
 - la aplicación de Devecoop retiene `MP_MARKETPLACE_FEE_PERCENT` como `marketplace_fee`.
 
-Todavía no está conectada al flujo de registro de `manager` (ver [Integración](#integración)).
+Los eventos con `is_paid` venden sus entradas desde `/events/<slug>/purchase` (ver [Integración](#integración)).
 
 ## Configuración
 
@@ -57,16 +57,17 @@ Sin credenciales, las operaciones fallan: **nunca** se aprueba un pago sin Merca
 
 ## Integración
 
-Lo que falta para venderle al público (siguiente etapa):
-
-- **Precio y cupo del evento** (`Event.is_paid`, `ticket_price`, `ticket_quota`, o tipos de entrada en E07). Se pasan a `create_order`.
-- **Formulario de compra** (`/events/<slug>/purchase`): comprador + N asistentes → `create_order` → redirect a `order.init_point`.
-- **Receiver de `payments.signals.order_paid`** en `manager`:
-  - crea un `Attendee` + `Ticket` por `OrderItem` (y guarda `item.attendee`);
-  - envía los tickets (`send_event_ticket`), usando `item.ticket_email`.
-- **Receiver de `order_refunded`** para invalidar los tickets.
-
-Las dos señales se envían después del commit, con el argumento `order`.
+- **Evento:** `Event.is_paid`, `ticket_price` y `ticket_quota` (cupo opcional). `EventForm` no deja marcar un evento como pago sin precio o sin una `SellerAccount` vinculada.
+- **Compra:** `payments.views.purchase` (`/events/<slug>/purchase`, nombre `event_purchase`):
+  - primero se elige la cantidad (hasta 10 y hasta el cupo disponible);
+  - después se cargan el comprador (con captcha) y los N asistentes (nombre, apellido, DNI y email opcional);
+  - se rechazan los DNIs repetidos en la orden o que ya tienen entrada en el evento;
+  - `create_order` y redirección a `order.init_point`.
+- **Registro gratuito:** en un evento pago, `/registration` y los enlaces de registro llevan a la compra y el autoregistro con QR se desactiva. La carga por colaboradores sigue disponible (invitaciones).
+- **Receivers** en `manager/receivers.py`; las dos señales se envían después del commit, con el argumento `order`:
+  - `order_paid` crea un `Attendee` (con DNI) y su `Ticket` por `OrderItem`. Envía un mail al comprador con todas las entradas, y a cada asistente con email propio la suya. Si un DNI ya tiene entrada, ese ítem no se emite y queda en el log para revisarlo a mano.
+  - `order_refunded` anula los tickets (`Ticket.cancelled`). El escáner y la búsqueda de asistencia no registran el ingreso de un ticket anulado.
+- **Unicidad de asistentes:** el DNI es único por evento (cuando existe). El email se valida en los formularios del registro gratuito.
 
 ## Tests
 

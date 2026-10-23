@@ -67,6 +67,26 @@ def get_ticket_body(first_name, last_name, event_name):
     return (body_txt, body_html)
 
 
+def get_order_tickets_body(buyer_name, event_name, quantity):
+    body_txt = _(
+        'Hello {buyer_name},\n'
+        'Thank you for your purchase! Here are your {quantity} ticket(s) for {event_name} event.\n'
+        'Please remember to print them and bring them with you the day(s) of the event.\n'
+        'Regards,\n'
+        '{event_name} and eventoL team'
+    ).format(buyer_name=buyer_name, event_name=event_name, quantity=quantity)
+    body_html = _(
+        '<p>Hello {buyer_name},</p><br />\n'
+        '<p>Thank you for your purchase! Here are your {quantity} ticket(s) for {event_name} event.'
+        '</p>\n'
+        '<p>Please remember to <em>print them and bring them with you</em> the day(s) of the event.'
+        '</p>\n'
+        '<p>Regards,</p>\n'
+        '<p>{event_name} and <em>eventoL</em> team</p>'
+    ).format(buyer_name=buyer_name, event_name=event_name, quantity=quantity)
+    return (body_txt, body_html)
+
+
 def get_installation_subject(first_name, last_name, event_name):
     return _('{first_name} {last_name}, thank you for participating {event_name}').format(
         first_name=first_name, last_name=last_name, event_name=event_name
@@ -128,6 +148,27 @@ def send_ticket_email(ticket_data, ticket_svg):
     email.attach(
         f'Ticket-{ticket_code}.pdf', cairosvg.svg2pdf(bytestring=ticket_svg), 'application/pdf'
     )
+    email.send(fail_silently=settings.EMAIL_FAIL_SILENTY)
+
+
+def send_order_tickets_email(event_name, buyer_name, email_to, tickets):
+    """Send every ticket of a purchase to the buyer in one e-mail.
+
+    ``tickets`` is a list of (ticket_code, ticket_svg). Not a shared_task for the same reason as
+    send_ticket_email (the SVG images).
+    """
+    email = EmailMultiAlternatives()
+    email.subject = get_ticket_subject(event_name)
+    body_txt, body_html = get_order_tickets_body(buyer_name, event_name, len(tickets))
+    email.body = body_txt
+    email.attach_alternative(body_html, 'text/html')
+    email.to = [email_to]
+    for ticket_code, ticket_svg in tickets:
+        email.attach(
+            f'Ticket-{ticket_code}.pdf',
+            cairosvg.svg2pdf(bytestring=ticket_svg),
+            'application/pdf',
+        )
     email.send(fail_silently=settings.EMAIL_FAIL_SILENTY)
 
 

@@ -104,6 +104,8 @@ from manager.utils.report import count_by
 
 logger = logging.getLogger('eventol')
 
+CANCELLED_TICKET_MESSAGE = _noop('The ticket was cancelled: it does not allow entry')
+
 
 # Auxiliary functions
 def update_event_info(event_slug, render_dict=None, event=None):
@@ -286,6 +288,9 @@ def manage_attendance(request, event_slug):
         if attendee_form.is_valid():
             attendee = attendee_form.cleaned_data['attendee']
             if attendee:
+                if attendee.ticket is not None and attendee.ticket.cancelled:
+                    messages.error(request, _(CANCELLED_TICKET_MESSAGE))
+                    return redirect(reverse('manage_attendance', args=[event_slug]))
                 if attendee.attended_today:
                     messages.success(
                         request, _('The attendee has already been registered correctly.')
@@ -340,7 +345,9 @@ def attendance_by_ticket(request, event_slug, ticket_code):
 
     if attendee:
         attendee = attendee.get()
-        if attendee.attended_today:
+        if attendee.ticket is not None and attendee.ticket.cancelled:
+            messages.error(request, _(CANCELLED_TICKET_MESSAGE))
+        elif attendee.attended_today:
             messages.success(request, _('The attendee has already been registered correctly.'))
         else:
             if hasattr(attendee, 'user'):
@@ -684,7 +691,9 @@ def attendance_by_autoreadqr(request, event_slug):
             attendance = AttendeeAttendanceDate.objects.filter(
                 attendee=attendee, date__date=timezone.localdate()
             )
-            if attendance.exists():
+            if attendee.ticket.cancelled:
+                messages.error(request, _(CANCELLED_TICKET_MESSAGE))
+            elif attendance.exists():
                 messages.info(request, _('You are already registered and present! Go have fun'))
             else:
                 AttendeeAttendanceDate.objects.create(attendee=attendee, mode='2')
