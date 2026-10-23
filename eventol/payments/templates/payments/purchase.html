@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block page-header %}{% trans "Buy tickets" %}{% endblock %}
+{% block content %}
+    <div class="card">
+        <div class="row">
+            <div class="col-sm-10 offset-sm-1 col-12">
+                <h4>{{ event.name }}</h4>
+                <p>{% blocktrans with price=unit_price %}Ticket price: ARS {{ price }}{% endblocktrans %}</p>
+                {% if available is not None and available > 0 %}
+                    <p>{% blocktrans count counter=available %}{{ counter }} ticket left{% plural %}{{ counter }} tickets left{% endblocktrans %}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if available == 0 %}
+            <div class="row">
+                <div class="col-sm-10 offset-sm-1 col-12">
+                    <h4><b class="fa fa-ban"></b> {% trans "Sold out" %}</h4>
+                </div>
+            </div>
+        {% elif quantity_form %}
+            <form id="purchase-quantity" method="get" action="{% url 'event_purchase' event_slug %}">
+                <div class="row">
+                    <div class="col-sm-10 offset-sm-1 col-12">
+                        {% include "form_field.html" with field=quantity_form.quantity only %}
+                        <button type="submit" class="btn btn-primary btn-raised float-right">
+                            {% trans "Continue" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <form id="purchase" method="post" action="{% url 'event_purchase' event_slug %}?quantity={{ quantity }}">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <div class="row">
+                    <div class="col-sm-10 offset-sm-1 col-12">
+                        {% if formset.non_form_errors %}
+                            <div class="alert alert-danger">{{ formset.non_form_errors.as_text }}</div>
+                        {% endif %}
+
+                        <h4>{% trans "Your data" %}</h4>
+                        <div class="row">
+                            {% for field in buyer_form.visible_fields %}
+                                <div class="col-lg-6 col-md-6">
+                                    {% include "form_field.html" with field=field only %}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        {% for form in formset %}
+                            <h4>{% blocktrans with number=forloop.counter %}Ticket {{ number }}{% endblocktrans %}</h4>
+                            <div class="row">
+                                {% for field in form.visible_fields %}
+                                    <div class="col-lg-6 col-md-6">
+                                        {% include "form_field.html" with field=field only %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+
+                        <p>
+                            <strong>
+                                {% blocktrans count counter=quantity with total=total %}{{ counter }} ticket - total ARS {{ total }}{% plural %}{{ counter }} tickets - total ARS {{ total }}{% endblocktrans %}
+                            </strong>
+                        </p>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-raised float-right">
+                                {% trans "Pay with Mercado Pago" %}
+                            </button>
+                            <a href="{% url 'event_purchase' event_slug %}" class="btn btn-default">
+                                {% trans "Change quantity" %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block other-script %}
+    <script>
+        $('#purchase').submit(function () {
+            $(this).find('button[type=submit]').attr('disabled', 'disabled');
+        });
+    </script>
+{% endblock %}

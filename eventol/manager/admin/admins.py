@@ -98,9 +98,11 @@ class AttendeeAdmin(ExportMixin, EventoLAdmin):
         'email_confirmed',
         'registration_date',
         'ticket',
+        'get_ticket_cancelled',
     )
     list_filter = (
         EventFilter,
+        'ticket__cancelled',
         'is_installing',
         'email_confirmed',
         'registration_date',
@@ -108,6 +110,7 @@ class AttendeeAdmin(ExportMixin, EventoLAdmin):
     search_fields = (
         'additional_info',
         'custom_fields',
+        'dni',
         'email',
         'first_name',
         'last_name',
@@ -135,6 +138,12 @@ class AttendeeAdmin(ExportMixin, EventoLAdmin):
         return obj.email
 
     get_email.short_description = _('Email')
+
+    def get_ticket_cancelled(self, obj):
+        return obj.ticket is not None and obj.ticket.cancelled
+
+    get_ticket_cancelled.short_description = _('Cancelled')
+    get_ticket_cancelled.boolean = True
 
 
 class AttendeeAttendanceDateAdmin(ExportMixin, EventoLAdmin):
@@ -241,6 +250,8 @@ class EventAdmin(ImageCroppingMixin, EventoLAdmin):
         'name',
         'url',
         'registration_closed',
+        'is_paid',
+        'ticket_price',
         'schedule_confirmed',
         'use_installations',
         'use_installers',
@@ -253,6 +264,7 @@ class EventAdmin(ImageCroppingMixin, EventoLAdmin):
     )
     list_filter = (
         'registration_closed',
+        'is_paid',
         'schedule_confirmed',
         'use_installations',
         'use_installers',
@@ -469,8 +481,9 @@ class TicketAdmin(EventoLAdmin):
         'get_user',
         'get_event',
         'sent',
+        'cancelled',
     )
-    list_filter = ('sent', UserFromEventUserSetFilter, EventFromEventUserSetFilter)
+    list_filter = ('sent', 'cancelled', UserFromEventUserSetFilter, EventFromEventUserSetFilter)
     search_fields = (
         'eventuser__user__username',
         'eventuser__user__first_name',

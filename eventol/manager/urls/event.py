@@ -2,6 +2,7 @@ from django.urls import re_path
 from django.views.generic.base import TemplateView
 
 from manager import views
+from payments import views as payments_views
 
 event_patterns = [
     re_path(r'^$', views.index, name='index'),
@@ -19,6 +20,7 @@ event_patterns = [
     re_path(r'^rooms/edit/(?P<room_id>\d+)/$', views.add_or_edit_room, name='edit_room'),
     re_path(r'^rooms/delete/(?P<room_id>\d+)/$', views.delete_room, name='delete_room'),
     re_path(r'^registration$', views.attendee_registration, name='attendee_registration'),
+    re_path(r'^purchase$', payments_views.purchase, name='event_purchase'),
     re_path(
         r'^registration/attendee/email-sent$',
         TemplateView.as_view(template_name='registration/attendee/email-sent.html'),

@@ -73,7 +73,11 @@
                     {% endif %}
                     {% if not user.is_authenticated or not user|is_registered_any_way:event_slug %}
                         <li>
-                            <a title="Register to this event" href="{% url "attendee_registration" event_slug %}">{% trans "Check in" %}</a>
+                            {% if event.is_paid %}
+                                <a title="Buy tickets" href="{% url "event_purchase" event_slug %}">{% blocktrans with price=event.ticket_price %}Buy tickets (ARS {{ price }}){% endblocktrans %}</a>
+                            {% else %}
+                                <a title="Register to this event" href="{% url "attendee_registration" event_slug %}">{% trans "Check in" %}</a>
+                            {% endif %}
                         </li>
                     {% endif %}
                     {% if event.activity_proposal_is_open and event.use_proposals %}

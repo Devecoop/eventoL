@@ -46,6 +46,7 @@ from manager.models import (
     Software,
 )
 from manager.utils.forms import USE_POSTGRES
+from payments.models import SellerAccount
 
 logger = logging.getLogger('eventol')
 
@@ -222,6 +223,21 @@ class EventUserSearchForm(forms.Form):
     )
 
 
+class UniqueAttendeeEmailMixin:  # pylint: disable=too-few-public-methods
+    """An email registers only once by event (the database only checks the DNI)."""
+
+    def validate_unique_email(self, cleaned_data):
+        email = cleaned_data.get('email')
+        event = cleaned_data.get('event')
+        if not email or not event:
+            return
+        attendees = Attendee.objects.filter(event=event, email__iexact=email)
+        if self.instance.pk:
+            attendees = attendees.exclude(pk=self.instance.pk)
+        if attendees.exists():
+            raise forms.ValidationError(_('You are already registered for this event'))
+
+
 class AttendeeRegistrationByCollaboratorForm(forms.ModelForm):
     class Meta:
         model = Attendee
@@ -311,7 +327,7 @@ class CollaboratorRegistrationForm(ModelForm):
         fields = '__all__'
 
 
-class AttendeeRegistrationFromUserForm(ModelForm):
+class AttendeeRegistrationFromUserForm(UniqueAttendeeEmailMixin, ModelForm):
     field_order = [
         'first_name',
         'last_name',
@@ -350,6 +366,11 @@ class AttendeeRegistrationFromUserForm(ModelForm):
             'registration_date': forms.HiddenInput(),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        self.validate_unique_email(cleaned_data)
+        return cleaned_data
+
 
 class EventUserRegistrationForm(ModelForm):
     class Meta:
@@ -358,7 +379,7 @@ class EventUserRegistrationForm(ModelForm):
         widgets = {'event': forms.HiddenInput()}
 
 
-class AttendeeRegistrationForm(ModelForm):
+class AttendeeRegistrationForm(UniqueAttendeeEmailMixin, ModelForm):
     repeat_email = forms.EmailField(label=_('Repeat Email'))
     captcha = CaptchaField()
 
@@ -408,6 +429,7 @@ class AttendeeRegistrationForm(ModelForm):
                 }
             )
 
+        self.validate_unique_email(cleaned_data)
         return cleaned_data
 
 
@@ -523,6 +545,9 @@ class EventForm(ModelForm):
             'tz_event',
             'limit_proposal_date',
             'registration_closed',
+            'is_paid',
+            'ticket_price',
+            'ticket_quota',
             'email',
             'external_url',
             'abstract',
@@ -560,7 +585,22 @@ class EventForm(ModelForm):
             )
         elif not use_proposals:
             cleaned_data['limit_proposal_date'] = datetime.date.today()
+        if cleaned_data.get('is_paid'):
+            self.validate_paid_event(cleaned_data)
         return cleaned_data
+
+    def validate_paid_event(self, cleaned_data):
+        ticket_price = cleaned_data.get('ticket_price')
+        if not ticket_price or ticket_price <= 0:
+            self.add_error('ticket_price', _('A paid event needs a ticket price greater than 0'))
+        sellers = SellerAccount.objects.filter(event__isnull=True)
+        if self.instance.pk:
+            sellers = sellers | SellerAccount.objects.filter(event=self.instance)
+        if not sellers.exists():
+            self.add_error(
+                'is_paid',
+                _('There is no Mercado Pago account linked to receive the payments'),
+            )
 
 
 class LoginForm(AllAuthLoginForm):
