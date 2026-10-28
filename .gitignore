@@ -43,6 +43,9 @@ eventol/conf/locale/**/*.mo
 
 #My files
 /CONTEXTO.md
+/docs/es/diseno-personalizable.md
+/docs/es/home-django-htmx.md
+/docs/es/verificacion-flujos.md
 my_settings.py
 deploy.txt
 eventol/manager/static/manager/css/eventol-bootstrap.css
