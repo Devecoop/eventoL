@@ -2,6 +2,34 @@
 
 @import '../styles/variables';
 
+// Configure Bootstrap and Material Design before their default variables load.
+$body-bg: $design-background;
+$body-color: $design-text;
+$font-family-sans-serif: $design-font-body;
+$font-size-base: $design-font-body-size;
+$line-height-base: $design-line-height;
+$headings-font-family: $design-font-heading;
+$headings-font-weight: $design-weight-semibold;
+$headings-line-height: $design-heading-line-height;
+$h1-font-size: $design-font-page-title;
+$h2-font-size: $design-font-section-title;
+$h3-font-size: $design-font-card-title;
+$h4-font-size: $design-font-body-size;
+$h5-font-size: $design-font-body-size;
+$h6-font-size: $design-font-label;
+$bmd-bmd-label-static-size-ratio: .875;
+$bmd-help-size-ratio: .8125;
+$border-radius: $design-radius-small;
+$input-border-color: $design-border;
+$input-focus-border-color: $design-primary;
+$input-btn-focus-color: rgba($design-primary, .25);
+$link-color: $design-primary;
+$bmd-label-color: $design-primary;
+$bmd-label-color-focus: $design-primary;
+$bmd-invalid-underline: $design-danger;
+$card-border-radius: $design-radius-card;
+$card-border-color: $design-border;
+
 $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 
 $theme-colors: (
@@ -29,25 +57,13 @@ html {
 
 body {
   color: $event-home-body-color;
+  font-family: $design-font-body;
+  font-weight: $design-weight-normal;
   /* Margin bottom by footer height */
-  font-family: Roboto !important;
   margin-bottom: 30px;
 }
 
-body,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.h1,
-.h2,
-.h3,
-.h4 {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 300;
-}
+@import '../styles/typography';
 
 body > .container,
 body > .container-fluid {
@@ -309,7 +325,7 @@ a {
 .card {
   box-shadow: 0 8px 17px 0 $card-shadow-color, 0 6px 20px 0 $card-shadow-color-end;
   margin-bottom: 20px;
-  padding: 19px;
+  padding: $design-panel-padding;
 }
 
 .badge {
@@ -392,6 +408,7 @@ a {
 .dropdown-menu {
   .dropdown-item {
     color: $dropdown-item-color !important;
+    max-width: none !important;
   }
 }
 
@@ -455,10 +472,6 @@ a:hover span.vote-cancel {
   }
 }
 
-.dropdown-menu .dropdown-item {
-  max-width: none !important;
-}
-
 .btn.bmd-btn-fab.social-login-btn {
   display: inline-grid;
 }
@@ -484,7 +497,7 @@ a:hover span.vote-cancel {
       border-radius: 0;
       box-shadow: unset;
       margin-bottom: 0;
-      padding: 19px;
+      padding: $design-panel-padding;
     }
 
     &:first-child {

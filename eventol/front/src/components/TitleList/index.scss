@@ -19,10 +19,11 @@
 
   .title,
   .category-title {
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 1.4;
-    margin-bottom: 1em;
+    @include design-heading($design-font-section-title, $design-font-section-title-mobile);
+
+    h2 {
+      @include design-heading($design-font-section-title, $design-font-section-title-mobile);
+    }
   }
 
   .titles-wrapper {

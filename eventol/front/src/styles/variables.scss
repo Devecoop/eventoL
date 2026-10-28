@@ -1,47 +1,49 @@
+@import './design';
+
 // Colors
 
-$eventol-color: #1f6879;
+$eventol-color: $design-primary;
 
-$white: #fff;
+$white: $design-surface;
 $black: #000;
 $light-gray: #fafafa;
 $dark-gray: #221f1f;
-$gray: #666a73;
+$gray: $design-muted;
 
 $a-color: $white;
 $text-color: $black;
-$gradient-color: $black;
+$gradient-color: $design-header-background;
 $gradient-gray-color: $light-gray;
 $gradient-end: $dark-gray;
 $gradient-end-rgba: rgba(34, 31, 31, 0);
 
 $user-profile: $gray;
 
-$body-background: $light-gray;
+$body-background: $design-background;
 $body-color: $white;
 
-$event-home-body-color: #212529;
+$event-home-body-color: $design-text;
 
 // Bootstrap colors
 $bootstrap-blue: #337ab7;
-$bootstrap-primary: #214760;
-$bootstrap-success: #449d44;
-$bootstrap-danger: #f44336;
+$bootstrap-primary: $design-primary;
+$bootstrap-success: $design-success;
+$bootstrap-danger: $design-danger;
 
 // Schedule
 $event-border-color: #01579b;
 
 // Forms
-$form-label-default-color: #009688;
-$form-bmd-label-default-color: #3b4147;
-$form-error-color: #f44336;
+$form-label-default-color: $design-primary;
+$form-bmd-label-default-color: $design-text;
+$form-error-color: $design-danger;
 
 // Containers
 $container-text-h1-default-color: #ffa500;
 $container-shadow-color: rgba(0, 0, 0, .7);
 
 // Card
-$card-border-color: rgba(0, 0, 0, .125);
+$card-border-color: $design-border;
 $card-shadow-color: rgba(0, 0, 0, .2);
 $card-shadow-color-end: rgba(0, 0, 0, .2);
 
@@ -58,7 +60,7 @@ $live-icon-color: #333;
 
 // Navbar
 $navbar-color: rgba(255, 255, 255, .84);
-$navbar-background-color: #214760;
+$navbar-background-color: $design-primary;
 
 // Alert
 $alert-info-color: #31708f;
@@ -66,6 +68,6 @@ $alert-info-background-color: #d9edf7;
 
 // Dropdown
 $dropdown-item-color: rgba(0, 0, 0, .87);
-$dropdown-background-color: #666a73;
-$dropdown-background-hover-color: #1f6879;
+$dropdown-background-color: $design-menu-background;
+$dropdown-background-hover-color: $design-primary;
 $dropdown-box-shadow-color: rgba(0, 0, 0, .2);

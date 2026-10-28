@@ -2,8 +2,8 @@
 
 .hero {
   background-size: cover;
-  margin-bottom: -22vh;
-  min-height: 800px;
+  margin-bottom: 0;
+  padding: $design-hero-padding-top $design-space-6 $design-hero-padding-bottom;
   position: relative;
   width: 100%;
 
@@ -21,7 +21,6 @@
     flex: 1;
     position: relative;
     text-align: center;
-    top: 20vh;
     z-index: 5;
 
     .logo {
@@ -30,10 +29,9 @@
       z-index: 4;
     }
 
-    h2 {
-      color: $text-color;
-      font-size: 27px;
-      font-weight: unset;
+    h1 {
+      @include design-heading($design-font-page-title, $design-font-page-title-mobile);
+      color: $design-text;
     }
 
     p {
@@ -71,4 +69,10 @@
     z-index: 3;
   }
 
+}
+
+@media (max-width: $design-breakpoint-type - 1) {
+  .hero {
+    padding-top: $design-hero-padding-top-mobile;
+  }
 }

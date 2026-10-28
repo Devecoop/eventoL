@@ -4,9 +4,9 @@
 .search {
   @extend %flex-element;
   @extend %center-element;
-  left: 0;
+  margin-top: $design-space-5;
   pointer-events: none;
-  position: absolute;
+  position: relative;
   width: 100%;
 
   input {
@@ -14,24 +14,35 @@
     -webkit-appearance: none;
     -webkit-transition: border .25s ease, width .125s ease .125s;
     appearance: none;
-    background: transparent;
-    border: 2px solid $black;
-    border-radius: 37px;
-    color: $text-color;
-    font-family: 'Lato', sans-serif;
-    font-size: 14px;
+    background: $design-surface;
+    border: 1px solid $design-border;
+    border-radius: $design-radius-input;
+    color: $design-text;
+    font-family: $design-font-search;
+    font-size: $design-font-base;
     font-weight: 300;
-    height: 37px;
+    height: $design-search-height;
+    max-width: $design-search-max-width;
     min-width: 150px;
     outline: none;
     padding: 0 10px;
     pointer-events: all;
     transition: border .25s ease, width .125s ease .125s;
-    width: 35vw;
+    width: $design-search-width;
   }
 
   input:focus {
-    border: 2px solid $eventol-color;
-    width: 45vw;
+    border-color: $design-primary;
+    box-shadow: $design-focus-shadow;
+    width: $design-search-width;
+  }
+}
+
+@media (max-width: $design-breakpoint-type - 1) {
+  .search {
+    input,
+    input:focus {
+      width: $design-search-width-mobile;
+    }
   }
 }

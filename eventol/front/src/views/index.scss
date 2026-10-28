@@ -1,5 +1,7 @@
+@import '../styles/design';
+
 body {
-  font-family: sans-serif;
+  font-family: $design-font-body;
   margin: 0;
   padding: 0;
 }

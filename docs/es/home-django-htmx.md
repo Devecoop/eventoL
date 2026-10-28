@@ -1,5 +1,10 @@
 # Home general con Django y HTMX
 
+Desde el 27 de octubre de 2026, la home tiene estilos propios y variables
+compartidas con Bootstrap. La organización actual y cómo personalizarla están
+en [Diseño personalizable](diseno-personalizable.md). Las secciones de validación
+y ajuste visual siguientes registran las etapas anteriores.
+
 La ruta `/` genera el encabezado, la portada y las listas de eventos mediante
 plantillas Django. El buscador envía un GET a `/home/search/` al presionar Enter;
 HTMX reemplaza únicamente el contenido de `#home-search-results` por HTML.

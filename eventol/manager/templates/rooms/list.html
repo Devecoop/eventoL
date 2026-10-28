@@ -3,9 +3,9 @@
 {% load i18n %}
 {% load filters %}
 {% block page-header %}
-    <div class="row justify-content-between">
-        <h1>{% trans "Rooms" %}</h1>
-        <div id="buttons" class="float-right">
+    <div class="page-heading-row">
+        <h1 class="page-title">{% trans "Rooms" %}</h1>
+        <div id="buttons" class="page-actions">
             {% if user.is_authenticated and user|is_organizer:event_slug %}
                 <a href="{% url "add_room"  event_slug %}" class="btn btn-raised btn-success">
                     {% trans 'Add Room' %}

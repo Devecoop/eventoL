@@ -1,7 +1,23 @@
+// sass-lint:disable no-misspelled-properties
+// The installed Sass linter predates the native CSS gap property.
+@import '../../styles/variables';
+@import '../../styles/components';
+
 .title {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $design-space-4;
+  justify-content: space-between;
   text-align: left;
 
+  h1 {
+    @include design-heading($design-font-page-title, $design-font-page-title-mobile);
+  }
+
   .buttons {
-    margin-top: -60px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: $design-space-2;
   }
 }

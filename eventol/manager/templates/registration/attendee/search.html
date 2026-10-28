@@ -3,7 +3,7 @@
 {% load staticfiles %}
 {% load i18n %}
 
-{% block page-header %}{% trans "Attendee Registration" %}{% endblock %}
+{% block page-header %}<h1 class="page-title">{% trans "Attendee Registration" %}</h1>{% endblock %}
 
 {% block page-name %}{% trans "Attendee Registration" %}{% endblock %}
 
@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-md-10 offset-md-1" style="font-weight: 500;">
                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                <h1><i class="fa fa-info-circle"></i> {% trans "Registration Instructions" %}</h1>
+                <h2 class="card-title"><i class="fa fa-info-circle"></i> {% trans "Registration Instructions" %}</h2>
                 <ol>
                     <li>Buscar un asistente que se pre-registró: Se puede buscar por nombre, apellido o email.
                         Ingresar algunas letras y esperar que el sistema lo sugiera.

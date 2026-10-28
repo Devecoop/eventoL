@@ -25,7 +25,7 @@
     <div class="card">
         <div class="row" style="justify-content: center;text-align: center;">
             <div class="col-sm-12">
-                <h1>{{ event.name }}</h1>
+                <h1 class="page-title">{{ event.name }}</h1>
                 {# show informative tags regarding user inscription to the event #}
                 {% if user.is_authenticated and user|is_registered:event_slug %}
                 <p>
@@ -49,7 +49,7 @@
             <div class="col-sm-12">
                 {% regroup dates by date|date:"F"|localize as dates_by_month %}
                 {% if event.registration_is_open %}
-                    <h3><i class="fa fa-calendar"></i>
+                    <p class="font-weight-bold"><i class="fa fa-calendar"></i>
                         {% for month in dates_by_month %}
                             {% blocktrans with days=month.list|sorted_days|join:", " the_month=month.grouper %}
                                 {{ the_month }} {{ days }}
@@ -61,14 +61,14 @@
                         {% blocktrans with year=dates.first.date|date:"Y" %}
                             - {{ year }}
                         {% endblocktrans %}
-                    </h3>
-                    <h4>
+                    </p>
+                    <p class="text-muted">
                         {% blocktrans with until=dates.first.date|timeuntil %}
                             In {{ until }}
                         {% endblocktrans %}
-                    </h4>
+                    </p>
                 {% else %}
-                    <h3><i class="fa fa-calendar"></i>
+                    <p class="font-weight-bold"><i class="fa fa-calendar"></i>
                         {% for month in dates_by_month %}
                             {% blocktrans with days=month.list|sorted_days|join:", " the_month=month.grouper %}
                                 {{ the_month }} {{ days }}
@@ -80,12 +80,12 @@
                         {% blocktrans with year=dates.first.date|date:"Y" %}
                             - {{ year }}
                         {% endblocktrans %}
-                    </h3>
-                    <h4>
+                    </p>
+                    <p class="text-muted">
                         {% blocktrans with since=dates.first.date|timesince %}
                             This event was {{ since }} ago.
                         {% endblocktrans %}
-                    </h4>
+                    </p>
                 {% endif %}
             </div>
         </div>
@@ -93,21 +93,21 @@
         {% if event.is_flisol %}
           <div class="row">
               <div class="col-lg-4 col-md-4">
-                  <h3><i class="fa fa-question-circle"></i> <a href="{% url "FAQ" event_slug %}">¿Qué es el
+                  <h2 class="section-title text-center"><i class="fa fa-question-circle"></i> <a href="{% url "FAQ" event_slug %}">¿Qué es el
                       FLISoL?</a>
-                  </h3>
+                  </h2>
 
                   <p>¿Quién lo organiza? ¿A quién está dirigido? ¿Cuánto cuesta? ¿Qué beneficios obtengo? Quiero
                       ayudar, ¿qué puedo hacer? Todas esas respuestas y muchas otras, acá.</p>
               </div>
               <div class="col-lg-4 col-md-4">
-                  <h3><i class="fa fa-usd"></i> <a href="{% url "index" event_slug %}">¿Cuánto cuesta?</a></h3>
+                  <h2 class="section-title text-center"><i class="fa fa-usd"></i> <a href="{% url "index" event_slug %}">¿Cuánto cuesta?</a></h2>
 
                   <p>La entrada al evento es totalmente <strong>¡libre y gratuita!</strong></p>
               </div>
               <div class="col-lg-4 col-md-4">
-                  <h3><i class="fa fa-pencil"></i> <a href="{% url "attendee_registration" event_slug %}">Anotate!</a>
-                  </h3>
+                  <h2 class="section-title text-center"><i class="fa fa-pencil"></i> <a href="{% url "attendee_registration" event_slug %}">Anotate!</a>
+                  </h2>
 
                   <p>La registración no es obligatoria, pero nos ayuda a prepararnos para recibirte mejor! Si vas a
                       traer una máquina para instalar, también nos podés decir qué tipo de máquina es, así tenemos
@@ -121,7 +121,7 @@
         <div class="card">
             <div id="map" class="map"></div>
             <div style="text-align:center">
-                <h3 id="place_name"></h3>
+                <h2 class="card-title" id="place_name"></h2>
                 <div id="address1" class="event-location-address"></div>
                 <div class="row">
                     <div class="col-md-6 offset-md-3 col-10 offset-1">
@@ -176,7 +176,7 @@
                             </div>
                             <div class="col-sm-6">
                                 <a style='text-decoration: none;' href='{% url "activity_detail" event.event_slug activity.id %}'>
-                                    <h2>{{ activity.title }}</h2>
+                                    <h3 class="card-title">{{ activity.title }}</h3>
                                 </a>
                                 <p><strong>{{ activity.abstract }}</strong></p>
                                 <p>{{ activity.long_description }}</p>
@@ -191,7 +191,7 @@
                         </div>
                         <div class="col-sm-6 col-md-6 col-lg-6" style="padding-top: 30px;">
                             {% if event.is_flisol %}
-                                    <h2>Charlas y Talleres</h2>
+                                    <h3 class="card-title">Charlas y Talleres</h3>
 
                                     <p><strong>Durante todo el día, para que puedas aprender y descubrir más sobre el Software
                                         Libre</strong></p>
@@ -244,7 +244,7 @@
 
     {% if event.contacts.all|length > 0 %}
         <div class="card">
-            <h3 style="text-align: center">{% trans 'Follow' %} {{ event.name }}!</h3>
+            <h2 class="section-title text-center">{% trans 'Follow' %} {{ event.name }}!</h2>
             <div class="event-contacts">
                 <div class="row" style="padding-top:20px;">
                     <div class="col-md-10 offset-md-1">

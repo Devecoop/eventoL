@@ -36,7 +36,7 @@ const TitleList = props => {
     return (
       <div className="title-list" data-loaded={mounted} id={id}>
         <div className="category-title">
-          <h1>{title}</h1>
+          <h2>{title}</h2>
 
           <SliderItems itemsData={[emptyEventItem]} sliderId={`${id}_empty`} />
         </div>
@@ -46,7 +46,7 @@ const TitleList = props => {
   return (
     <div className="title-list" data-loaded={mounted} id={id}>
       <div className="category-title">
-        <h1>{title}</h1>
+        <h2>{title}</h2>
 
         <SliderItems itemsData={itemsData} sliderId={id} />
       </div>

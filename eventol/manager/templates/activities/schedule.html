@@ -13,9 +13,9 @@
 {% endblock %}
 
 {% block content %}
-    <h1>{% trans "Activities Schedule" %}</h1>
+    <h1 class="page-title">{% trans "Activities Schedule" %}</h1>
     {% for date in dates %}
-        <div class="card d-inline-block">
+        <div class="card schedule-day">
             <h2>
               {% with data=activities|get_schedule_date:date %}
                   {% blocktrans with day=forloop.counter %}
@@ -24,7 +24,7 @@
               {% endwith %}
             </h2>
             <hr/>
-            <div id="calendar-{{ date | escapejs }}"></div>
+            <div class="schedule-grid"><div id="calendar-{{ date | escapejs }}"></div></div>
         </div>
     {% endfor %}
 {% endblock %}

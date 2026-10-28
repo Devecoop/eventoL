@@ -20,9 +20,9 @@ exports[`Hero Default render 1`] = `
         src="LOGO_LANDING_DEFAULT"
       />
     </p>
-    <h2>
+    <h1>
       Search your event
-    </h2>
+    </h1>
   </div>
   <div
     className="overlay"
@@ -50,9 +50,9 @@ exports[`Hero With custom backgound 1`] = `
         src="LOGO_LANDING_DEFAULT"
       />
     </p>
-    <h2>
+    <h1>
       Search your event
-    </h2>
+    </h1>
   </div>
   <div
     className="overlay"
@@ -80,9 +80,9 @@ exports[`Hero With custom logo 1`] = `
         src="logo-custom"
       />
     </p>
-    <h2>
+    <h1>
       Search your event
-    </h2>
+    </h1>
   </div>
   <div
     className="overlay"
@@ -110,9 +110,9 @@ exports[`Hero With message 1`] = `
         src="LOGO_LANDING_DEFAULT"
       />
     </p>
-    <h2>
+    <h1>
       message
-    </h2>
+    </h1>
   </div>
   <div
     className="overlay"
@@ -140,11 +140,12 @@ exports[`Hero With slug 1`] = `
         src="LOGO_LANDING_DEFAULT"
       />
     </p>
-    <h2>
+    <h1>
       You are seeing all of parsed-slug events
-      <br />
+    </h1>
+    <p>
       Please, select one to continue
-    </h2>
+    </p>
   </div>
   <div
     className="overlay"
@@ -178,9 +179,9 @@ exports[`Hero With user (isLogged is true) 1`] = `
     >
       Create event
     </a>
-    <h2>
+    <h1>
       Search your event
-    </h2>
+    </h1>
   </div>
   <div
     className="overlay"

@@ -1,17 +1,3 @@
-// The templates reuse the React home's styles, in their original cascade order.
-import '../components/Hero/index.scss';
-import '../components/Logo/index.scss';
-import '../components/Navigation/index.scss';
-import '../components/UserProfile/index.scss';
-import '../components/SignIn/index.scss';
-import '../components/Header/index.scss';
-import '../components/Search/index.scss';
-import '../components/Map/index.scss';
-import '../components/Item/index.scss';
-import '../components/Slider/index.css';
-import '../components/TitleList/index.scss';
-import '../containers/Home/index.scss';
-import '../views/index.scss';
 import './home.scss';
 
 import 'slick-carousel/slick/slick';
@@ -26,9 +12,9 @@ const initialize = root => {
       $(el).slick({
         ...SLIDER_BASE_SETTINGS,
         prevArrow:
-          '<div class="arrow arrow-prev fa fa-chevron-left" role="button" tabindex="0" style="display:block;color:black"></div>',
+          '<div class="arrow arrow-prev fa fa-chevron-left" role="button" tabindex="0" ></div>',
         nextArrow:
-          '<div class="arrow arrow-next fa fa-chevron-right" role="button" tabindex="0" style="display:block;color:black"></div>',
+          '<div class="arrow arrow-next fa fa-chevron-right" role="button" tabindex="0" ></div>',
       });
       el.querySelectorAll('[data-home-map]').forEach(map => {
         // Missing or invalid locations were blank cards in the original home.
