@@ -1,0 +1,81 @@
+// Shared design values. Configure the theme here before changing component rules.
+// Sass only: this file emits no CSS and can be imported by every bundle.
+$design-primary: #175c57 !default;
+$design-background: #edf7f1 !default;
+$design-surface: #fff !default;
+$design-text: #202925 !default;
+$design-muted: #666a73 !default;
+$design-border: #96b9ac !default;
+$design-success: $design-primary !default;
+$design-danger: #f44336 !default;
+$design-card-background: #111 !default;
+$design-card-border: #29332e !default;
+$design-card-text: $design-surface !default;
+$design-card-muted: #c6ceca !default;
+$design-media-background: #191e1b !default;
+$design-header-background: #000 !default;
+$design-header-text: $design-surface !default;
+$design-menu-background: $design-muted !default;
+$design-menu-opacity: 1 !default;
+$design-card-shadow: 0 8px 24px rgba($design-primary, .12) !default;
+$design-focus-shadow: 0 0 0 .2rem rgba($design-primary, .25) !default;
+$design-focus-width: 2px !default;
+
+// Keep the existing home and internal-page font families.
+$design-font-search: 'Lato', sans-serif !default;
+$design-font-body: 'Roboto', sans-serif !default;
+$design-font-heading: $design-font-body !default;
+$design-font-body-size: 1rem !default;
+$design-font-small: 12px !default;
+$design-font-base: 14px !default;
+// Content roles: page > section > card > body > supporting text.
+$design-font-page-title: 1.75rem !default;
+$design-font-page-title-mobile: 1.5rem !default;
+$design-font-section-title: 1.375rem !default;
+$design-font-section-title-mobile: 1.25rem !default;
+$design-font-card-title: 1.125rem !default;
+$design-font-card-title-mobile: 1.125rem !default;
+$design-font-hero-title: $design-font-page-title !default;
+$design-font-label: .875rem !default;
+$design-font-help: .8125rem !default;
+$design-heading-line-height: 1.3 !default;
+$design-breakpoint-type: 768px !default;
+$design-weight-light: 300 !default;
+$design-weight-normal: 400 !default;
+$design-weight-semibold: 600 !default;
+$design-weight-bold: 700 !default;
+$design-line-height: 1.5 !default;
+
+$design-space-1: 4px !default;
+$design-space-2: 8px !default;
+$design-space-3: 12px !default;
+$design-space-4: 16px !default;
+$design-space-5: 20px !default;
+$design-space-6: 24px !default;
+$design-space-7: 36px !default;
+$design-space-8: 40px !default;
+$design-radius-small: $design-space-1 !default;
+$design-radius-card: 10px !default;
+$design-radius-input: 37px !default;
+$design-transition: .2s ease !default;
+$design-transition-menu: .125s ease !default;
+
+// Layout values use Sass because media queries cannot use CSS custom properties.
+$design-breakpoint-navigation: 950px !default;
+$design-content-width: 1360px !default;
+$design-hero-padding-top: 150px !default;
+$design-hero-padding-top-mobile: 120px !default;
+$design-hero-padding-bottom: 56px !default;
+$design-logo-width: 190px !default;
+$design-search-width: 65vw !default;
+$design-search-width-mobile: 85vw !default;
+$design-search-max-width: 640px !default;
+$design-search-height: 46px !default;
+$design-card-min-height: 340px !default;
+$design-media-height: 160px !default;
+$design-card-padding: 18px !default;
+$design-panel-padding: $design-space-6 !default;
+$design-panel-padding-mobile: $design-space-4 !default;
+$design-page-width: 1120px !default;
+$design-page-gap: $design-space-6 !default;
+$design-description-lines: 3 !default;

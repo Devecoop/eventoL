@@ -1,0 +1,48 @@
+@import '../../styles/variables';
+@import '../../styles/commons';
+
+.search {
+  @extend %flex-element;
+  @extend %center-element;
+  margin-top: $design-space-5;
+  pointer-events: none;
+  position: relative;
+  width: 100%;
+
+  input {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    -webkit-transition: border .25s ease, width .125s ease .125s;
+    appearance: none;
+    background: $design-surface;
+    border: 1px solid $design-border;
+    border-radius: $design-radius-input;
+    color: $design-text;
+    font-family: $design-font-search;
+    font-size: $design-font-base;
+    font-weight: 300;
+    height: $design-search-height;
+    max-width: $design-search-max-width;
+    min-width: 150px;
+    outline: none;
+    padding: 0 10px;
+    pointer-events: all;
+    transition: border .25s ease, width .125s ease .125s;
+    width: $design-search-width;
+  }
+
+  input:focus {
+    border-color: $design-primary;
+    box-shadow: $design-focus-shadow;
+    width: $design-search-width;
+  }
+}
+
+@media (max-width: $design-breakpoint-type - 1) {
+  .search {
+    input,
+    input:focus {
+      width: $design-search-width-mobile;
+    }
+  }
+}

@@ -1,0 +1,81 @@
+@import '../styles/variables';
+@import '../styles/commons';
+@import '../styles/components';
+
+// Load the search font once; Bootstrap supplies the shared body font.
+// sass-lint:disable no-url-domains no-url-protocols
+@import url('https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900');
+// sass-lint:enable no-url-domains no-url-protocols
+
+.home-page {
+  background: $design-background;
+  color: $design-text;
+  font-family: $design-font-body;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+
+  div,
+  span,
+  p,
+  a,
+  ul,
+  li,
+  header,
+  nav {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    vertical-align: baseline;
+  }
+
+  ul {
+    list-style: none;
+  }
+
+  p {
+    font-size: $design-font-body-size;
+    font-weight: $design-weight-normal;
+    line-height: $design-line-height;
+    margin-bottom: 1em;
+  }
+
+  a {
+    color: $design-header-text;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      color: $design-header-text;
+      text-decoration: none;
+    }
+  }
+
+  a,
+  button,
+  [role='link'] {
+    &:focus-visible {
+      @include design-focus;
+    }
+  }
+
+  // Some legacy navigation buttons use display: contents; focus their visible child.
+  button:focus-visible {
+    i,
+    li {
+      @include design-focus;
+    }
+  }
+
+  .leaflet-container {
+    font: unset;
+
+    a {
+      color: unset;
+    }
+  }
+
+  @import '../styles/home/navigation';
+  @import '../styles/home/layout';
+  @import '../styles/home/cards';
+}

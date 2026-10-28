@@ -9,6 +9,7 @@
           type="text/css" media="screen"/>
     <link rel="stylesheet" href="{% static "manager/css/roullette.css" %}" type="text/css" media="screen"/>
 {% endblock %}
+{% block page-header %}<h1 class="page-title">{% trans "Draw" %}</h1>{% endblock %}
 {% block content %}
     <div class="card col-lg-3">
         <div class="row" style="text-align: center">
@@ -24,11 +25,11 @@
                     <div class="content">
                         <div>
                             <div id="casino1" class="slotMachine" style="margin-left: -65px;">
-                                <div id="draw" class="wheel"><h1>{% trans 'Draw!' %}</h1></div>
+                                <div id="draw" class="wheel"><p class="card-title">{% trans 'Draw!' %}</p></div>
                                 {% for eventuser in eventusers %}
-                                    <div id="{{ forloop.counter0 }}" class="wheel"><h1 style="font-size: 20px;">
+                                    <div id="{{ forloop.counter0 }}" class="wheel"><p class="card-title">
                                         {{ eventuser|truncatechars:20 }}
-                                    </h1></div>
+                                    </p></div>
                                 {% endfor %}
                             </div>
                         </div>
@@ -59,7 +60,7 @@
                 if (to_delete) {
                     var divs = $(".slotMachineContainer").children("div");
                     if (divs.length === 3) {
-                        $('#casino1').html("<h1 class='wheel' style='background-color: #EEEEEE'>{% trans "There aren't any more participants" %}</h1>");
+                        $('#casino1').html("<p class='wheel' style='background-color: #EEEEEE'>{% trans "There aren't any more participants" %}</p>");
                         $("#slotMachineButtonStop").hide();
                         $("#slotMachineButtonShuffle").hide();
                         return;

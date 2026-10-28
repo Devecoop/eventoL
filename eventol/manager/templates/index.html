@@ -1,74 +1,52 @@
 <!doctype html>
-{% load static %}
-{% load i18n %}
-<html lang="en">
+{% load render_bundle from webpack_loader %}
+{% load staticfiles i18n home %}
+{% get_current_language as language_code %}
+<html lang="{{ language_code }}">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, scale=1.0" />
-    <link rel="shortcut icon" type="image/png" href="{% static "favicon.ico" %}"/>
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
     <meta name="description" content="Event Management Software">
+    <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false}'>
     <title>EventoL</title>
-    <script type="text/javascript" src="{% url 'javascript-catalog' %}"></script>
-    <link rel="stylesheet" type="text/css" href="{% static "manager/css/events.css" %}">
+    <script src="{% static 'manager/vendor/htmx/htmx-2.0.11.min.js' %}" defer></script>
   </head>
-  <body>
-    <div id="root"><div>
-
-    <script type="text/javascript" src="{% static "build/vendors.js" %}" alt="vendors"></script>
-    <script type="text/javascript" src="{% static "build/base.js" %}" alt="base"></script>
-    <script type="text/javascript" src="{% static "build/slick.js" %}" alt="slick"></script>
-    <script type="text/javascript" src="{% static "build/map.js" %}" alt="map"></script>
-    <script type="text/javascript" src="{% static "build/Home.js" %}" alt="Home"></script>
-
-    <script>
-      {% get_available_languages as languages %}
-      {% if languages %}
-        var languages = [
-          {% for lang_code, lang in languages %}
-            {code: '{{ lang_code }}', name: '{{ lang }}'},
-          {% endfor %}
-        ];
-      {% endif %}
-      
-      window.render_components({
-        {% if EVENTOL_SETTINGS.message and EVENTOL_SETTINGS.message.strip %}
-          message: '{{ EVENTOL_SETTINGS.message }}',
-        {% endif %}
-
-        {% if EVENTOL_SETTINGS.background %}
-          background: '{{ EVENTOL_SETTINGS.background.url }}',
-        {% endif %}
-
-        {% if EVENTOL_SETTINGS.logo_header %}
-          logo_header: '{{ EVENTOL_SETTINGS.logo_header.url }}',
-        {% endif %}
-
-        {% if EVENTOL_SETTINGS.logo_landing %}
-          logo_landing: '{{ EVENTOL_SETTINGS.logo_landing.url }}',
-        {% endif %}
-
-        {% if user.is_authenticated %}
-          user: {
-            username: '{{ user.username | safe }}',
-            first_name: '{{ user.first_name | safe }}',
-            last_name: '{{ user.last_name | safe }}'
-          },
-        {% endif %}
-
-        {% if languages %}
-          languages: languages,
-          onChangeLanguage: function change_lang(language_code) {
-            $.post(
-              "{% url 'set_language' %}",
-              {language: language_code, csrfmiddlewaretoken: "{{ csrf_token }}"},
-              function(data, status, xhr) {
-                location.reload();
-              }
-            );
-          },
-        {% endif %}
-      });
-    </script>
+  <body class="home-page">
+    <div id="root">
+      <div>
+        <header class="header">
+          <div class="nav-wide">
+            <div class="logo-component"><a href="{% url 'home' %}"><img alt="header logo" src="{% if EVENTOL_SETTINGS.logo_header %}{{ EVENTOL_SETTINGS.logo_header.url }}{% else %}{% static 'manager/img/eventol-white.png' %}{% endif %}" /></a></div>
+            {% include 'home/navigation.html' %}
+          </div>
+          <div class="nav-narrow">
+            <div class="logo-component"><a href="{% url 'home' %}"><img alt="header logo" src="{% if EVENTOL_SETTINGS.logo_header %}{{ EVENTOL_SETTINGS.logo_header.url }}{% else %}{% static 'manager/img/eventol-white.png' %}{% endif %}" /></a></div>
+            <div class="nav-right">
+              <button type="button" data-menu-toggle aria-expanded="false" aria-label="{% home_trans 'Menu' %}"><i class="fa fa-bars fa-2x"></i></button>
+              <div class="narrow-links">{% include 'home/navigation.html' %}</div>
+            </div>
+          </div>
+        </header>
+        <div class="hero" id="hero">
+          <div class="content">
+            <p><img alt="logo" class="logo" src="{% if EVENTOL_SETTINGS.logo_landing %}{{ EVENTOL_SETTINGS.logo_landing.url }}{% else %}{% static 'manager/img/logo.png' %}{% endif %}" /></p>
+            {% if user.is_authenticated %}<a class="btn btn-raised btn-warning btn-create-event" href="{% url 'create_event' %}">{% home_trans 'Create event' %}</a>{% endif %}
+            <h1 class="page-title">{% if EVENTOL_SETTINGS.message and EVENTOL_SETTINGS.message.strip %}{{ EVENTOL_SETTINGS.message }}{% else %}{% home_trans 'Search your event' %}{% endif %}</h1>
+            <form class="search" id="search" action="{% url 'home' %}" method="get" hx-get="{% url 'home_search' %}" hx-target="#home-search-results" hx-sync="this:replace">
+              <input id="search-input" name="search" placeholder="{% home_trans 'Search by title…' %}" type="search" value="{{ request.GET.search|default:'' }}" />
+            </form>
+          </div>
+        </div>
+        <div id="home-search-results">{% include 'home/search_results.html' %}</div>
+        {% for section in sections %}{% include 'home/section.html' %}{% endfor %}
+      </div>
+    </div>
+    <form id="home-language" action="{% url 'set_language' %}" method="post" hidden>{% csrf_token %}<input name="language" /><input name="next" value="{{ request.get_full_path }}" /></form>
+    {% render_bundle 'base' %}
+    {% render_bundle 'slick' %}
+    {% render_bundle 'map' %}
+    {% render_bundle 'HomeTemplates' %}
   </body>
 </html>

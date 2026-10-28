@@ -43,6 +43,13 @@ eventol/conf/locale/**/*.mo
 *~
 
 #My files
+<<<<<<< HEAD
+/CONTEXTO.md
+/docs/es/diseno-personalizable.md
+/docs/es/home-django-htmx.md
+/docs/es/verificacion-flujos.md
+my_settings.py
+=======
 .cache
 .config/
 .coverage
@@ -61,6 +68,7 @@ eventol/conf/locale/**/*.mo
 coverage/
 data/
 db.sqlite3
+>>>>>>> 7430cafb283e928a79ebbc85741181e0a2e33879
 deploy.txt
 deploy/docker/.env
 deploy/docker/db/

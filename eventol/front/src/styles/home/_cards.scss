@@ -1,0 +1,91 @@
+.home-event-card {
+  @include design-card;
+  cursor: pointer;
+  height: auto;
+  margin-right: $design-space-6;
+  min-height: $design-card-min-height;
+  transition: box-shadow $design-transition, transform $design-transition;
+
+  &:hover,
+  &:focus-visible {
+    @include design-focus;
+    box-shadow: $design-card-shadow;
+    transform: translateY(-2px);
+  }
+}
+
+.home-event-media {
+  background: $design-media-background;
+  height: $design-media-height;
+  overflow: hidden;
+  width: 100%;
+
+  img {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+}
+
+.home-event-placeholder {
+  padding: $design-space-5;
+
+  img {
+    object-fit: contain;
+  }
+}
+
+.home-event-info {
+  padding: $design-card-padding;
+}
+
+.home-event-title {
+  color: $design-card-text;
+  font-size: $design-font-card-title;
+  font-weight: $design-weight-semibold;
+  line-height: 1.3;
+  margin: 0 0 10px;
+}
+
+.home-event-date {
+  border-left: 3px solid $design-primary;
+  color: $design-card-text;
+  display: block;
+  font-size: $design-font-base;
+  font-weight: $design-weight-semibold;
+  line-height: $design-line-height;
+  margin-bottom: 6px;
+  padding-left: $design-space-2;
+}
+
+.home-event-place,
+.home-event-description,
+.home-event-attendees {
+  color: $design-card-muted;
+  font-size: $design-font-body-size;
+  line-height: $design-line-height;
+  margin: 0 0 $design-space-2;
+}
+
+.home-event-description {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $design-description-lines;
+  display: -webkit-box;
+  overflow: hidden;
+}
+
+.home-event-tags {
+  display: flex;
+  flex-wrap: wrap;
+
+  a {
+    @include design-tag;
+  }
+}
+
+@media (max-width: $design-breakpoint-navigation - 1) {
+  .home-event-card {
+    margin-right: $design-space-3;
+  }
+}
