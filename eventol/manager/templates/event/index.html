@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% load render_bundle from webpack_loader %}
-{% load staticfiles %}
+{% load static %}
 {% load i18n %}
 {% load l10n %}
 {% load cropping %}
@@ -18,8 +17,8 @@
         }
     </style>
 
-    {% render_bundle 'slick' %}
-    {% render_bundle 'map' %}
+    <script type="text/javascript" src="{% static "build/slick.js" %}" alt="slick"></script>
+    <script type="text/javascript" src="{% static "build/map.js" %}" alt="map"></script>
 {% endblock %}
 {% block content %}
     <div class="card">
@@ -117,7 +116,7 @@
         {% endif %}
     </div>
 
-    {% if event.place %}
+    {% if event.coords %}
         <div class="card">
             <div id="map" class="map"></div>
             <div style="text-align:center">
@@ -178,8 +177,8 @@
                                 <a style='text-decoration: none;' href='{% url "activity_detail" event.event_slug activity.id %}'>
                                     <h3 class="card-title">{{ activity.title }}</h3>
                                 </a>
-                                <p><strong>{{ activity.abstract }}</strong></p>
-                                <p>{{ activity.long_description }}</p>
+                                <p><strong>{{ activity.abstract|truncatewords:100 }}</strong></p>
+                                <p>{{ activity.long_description|truncatewords:500 }}</p>
                                 <p><strong>{% trans 'Speakers' %}:</strong> {{ activity.speakers_names|title }}</p>
                             </div>
                         </div>
@@ -265,8 +264,8 @@
         $(document).ready(function () {
             window.libs.slick('slick_charlas');
 
-            {% if event.place %}
-                window.libs.map({{ event.place|safe }});
+            {% if event.coords %}
+                window.libs.map({{ event.coords|safe }});
             {% endif %}
         });
     </script>

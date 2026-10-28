@@ -1,7 +1,6 @@
 from channels.binding.websockets import WebsocketBinding
 
-from .models import (Activity, AttendeeAttendanceDate, Event,
-                     EventUserAttendanceDate, Installation)
+from .models import Activity, AttendeeAttendanceDate, Event, EventUserAttendanceDate, Installation
 
 
 class ActivityBinding(WebsocketBinding):
@@ -10,10 +9,10 @@ class ActivityBinding(WebsocketBinding):
     fields = ['id']
 
     @classmethod
-    def group_names(cls, instance):
+    def group_names(cls, _instance):
         return ['activities-updates']
 
-    def has_permission(self, user, action, pk):
+    def has_permission(self, _user, _action, _pk):
         return True
 
 
@@ -23,10 +22,10 @@ class AttendeeAttendanceDateBinding(WebsocketBinding):
     fields = ['id']
 
     @classmethod
-    def group_names(cls, instance):
+    def group_names(cls, _instance):
         return ['attendeeattendancedates-updates']
 
-    def has_permission(self, user, action, pk):
+    def has_permission(self, _user, _action, _pk):
         return True
 
 
@@ -36,10 +35,10 @@ class EventBinding(WebsocketBinding):
     fields = ['id']
 
     @classmethod
-    def group_names(cls, instance):
+    def group_names(cls, _instance):
         return ['events-updates']
 
-    def has_permission(self, user, action, pk):
+    def has_permission(self, _user, _action, _pk):
         return True
 
 
@@ -49,10 +48,10 @@ class EventUserAttendanceDateBinding(WebsocketBinding):
     fields = ['id']
 
     @classmethod
-    def group_names(cls, instance):
+    def group_names(cls, _instance):
         return ['eventuserattendancedates-updates']
 
-    def has_permission(self, user, action, pk):
+    def has_permission(self, _user, _action, _pk):
         return True
 
 
@@ -62,8 +61,8 @@ class InstallationBinding(WebsocketBinding):
     fields = ['id']
 
     @classmethod
-    def group_names(cls, instance):
+    def group_names(cls, _instance):
         return ['installations-updates']
 
-    def has_permission(self, user, action, pk):
+    def has_permission(self, _user, _action, _pk):
         return True

@@ -1,92 +1,53 @@
 #########################################
-# frontend image
-#########################################
-FROM node:16-alpine3.13 as frontend
-
-## Install system dependencies
-RUN apk --update add --no-cache \
-    git gcc make autoconf automake musl-dev zlib zlib-dev python2 g++ \
-  && rm -rf /var/cache/apk/* /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Set working directory
-WORKDIR /app
-RUN chown -R node:node /app
-
-# Set user
-USER node
-
-# Install yarn dependencies
-COPY --chown=node:node ./eventol/front/package.json ./eventol/front/yarn.lock ./
-RUN yarn install
-
-# Copy code
-COPY --chown=node:node ./eventol/front/ .
-
-# Build
-RUN yarn build
-
-EXPOSE 3000
-
-CMD ["tail", "-f", "/dev/null"]
-
-#########################################
 # build image
 #########################################
-FROM python:3.9.6-alpine3.13 as development
+FROM python:3.12-slim-bookworm
 
 # Set environment variables
-ENV APP_ROOT /usr/src/app/
-ENV IS_ALPINE true
-ENV DJANGO_CONFIGURATION=Prod
+ENV APP_ROOT=/usr/src/app/
 
-# Install system dependencies
-RUN apk --update add --no-cache \
-  bash git gcc cairo-dev postgresql-dev libxslt-dev postgresql-dev gcc cargo \
-  gettext musl-dev py3-setuptools jpeg-dev make python3-dev sox flite libffi-dev openssl-dev \
-  && rm -rf /var/cache/apk/* /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Install system dependencies using apt-get
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    bash git gcc libc6-dev libcairo2-dev libpq-dev libxslt1-dev cargo gdal-bin \
+    sox flite gettext build-essential pkg-config default-jdk unzip wget python3 python3-pip \
+    libffi-dev libssl-dev libxmlsec1-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-## Install python dependencies
-RUN pip3 install --upgrade pip
-RUN pip3 install --no-cache-dir cffi cairocffi psycopg2
-RUN apk --update add --no-cache cairo-dev \
-  && rm -rf /var/cache/apk/* /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Install Python dependencies
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir cffi cairocffi psycopg2
+
+# Additional installation for cairo-dev equivalent
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libcairo2-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create folders for deploy
 RUN mkdir -p ${APP_ROOT}
 RUN mkdir -p /var/log/eventol
 WORKDIR ${APP_ROOT}
 
-# Create user
-RUN adduser -D -h ${APP_ROOT} -s /bin/bash app
-RUN chown app:app /var/log/eventol
-
 # Install python requirements
-COPY --chown=app:app ./requirements.txt ./requirements-dev.txt ${APP_ROOT}
+COPY ./requirements.txt ./requirements-dev.txt ${APP_ROOT}
 RUN pip3 install --no-cache-dir -r requirements-dev.txt
-
-# Set user
-USER app
+RUN pip3 install psycopg2-binary gunicorn celery
 
 # Copy python code
-COPY --chown=app:app ./Makefile ${APP_ROOT}/Makefile
-COPY --chown=app:app ./eventol ${APP_ROOT}/eventol
+COPY ./Makefile ${APP_ROOT}/Makefile
+COPY ./eventol ${APP_ROOT}/eventol
 RUN mkdir -p ${APP_ROOT}/eventol/manager/static
-RUN mkdir -p ${APP_ROOT}/eventol/front/eventol/static
 
 # Copy git files
-COPY --chown=app:app ./.git ${APP_ROOT}/.git
+COPY ./.git ${APP_ROOT}/.git
 
-# Copy frontend files
-COPY --chown=app:app --from=frontend /app/webpack-stats-prod.json ${APP_ROOT}/eventol/front/webpack-stats-prod.json
-COPY --chown=app:app --from=frontend /app/eventol/static ${APP_ROOT}/eventol/front/eventol/static
-
-# Copy script for docker-compose wait and start-eventol
-COPY --chown=app:app ./deploy/docker/scripts/wait-for-it.sh ${APP_ROOT}/wait-for-it.sh
-COPY --chown=app:app ./deploy/docker/scripts/start_eventol.sh ${APP_ROOT}/start_eventol.sh
+# Copy script for docker-compose wait, start-eventol and start-celery
+COPY ./deploy/docker/scripts/wait-for-it.sh ${APP_ROOT}/wait-for-it.sh
+COPY ./deploy/docker/scripts/start_eventol.sh ${APP_ROOT}/start_eventol.sh
+COPY ./deploy/docker/scripts/start_celery.sh ${APP_ROOT}/start_celery.sh
 
 # Collect statics
 RUN mkdir -p ${APP_ROOT}/eventol/static
-RUN cd ${APP_ROOT}/eventol && python manage.py collectstatic --noinput
 
 # Create media folder
 RUN mkdir -p ${APP_ROOT}/eventol/media
@@ -96,7 +57,6 @@ RUN touch /var/log/eventol/eventol.log
 
 # Compile .po files
 RUN sed -i 's@#~ @@g' ${APP_ROOT}/eventol/conf/locale/*/LC_MESSAGES/djangojs.po
-RUN cd ${APP_ROOT}/eventol && python manage.py compilemessages
 
 EXPOSE 8000
 

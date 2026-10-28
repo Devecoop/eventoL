@@ -12,8 +12,6 @@ variables:
 docker master image:
   stage: build
   image: docker:git
-  tags:
-    - docker
   services:
     - docker:dind
   script:
@@ -30,8 +28,6 @@ docker master image:
 docker dev image:
   stage: build
   image: docker:git
-  tags:
-    - docker
   services:
     - docker:dind
   script:
@@ -45,8 +41,6 @@ docker dev image:
 docker image:
   stage: build
   image: docker:git
-  tags:
-    - docker
   services:
     - docker:dind
   script:
@@ -57,71 +51,35 @@ docker image:
 
 python-testing:
   services:
-    - postgres:9.6
+    - postgis/postgis:14-3.5
   variables:
     PSQL_USER: eventol
     PSQL_DBNAME: eventol
-    PSQL_HOST: postgres
+    PSQL_HOST: postgis-postgis
+    PSQL_PASSWORD: secret
     POSTGRES_DB: eventol
     POSTGRES_USER: eventol
     POSTGRES_PASSWORD: secret
-  image: python:3.9.6
+    TIME_ZONE: UTC
+    DJANGO_CONFIGURATION: CI
+  image: python:3.12-bookworm
   stage: testing
+  before_script:
+    - apt-get update -qq && apt-get install -y --no-install-recommends optipng libsqlite3-mod-spatialite python3-tk tk-dev gdal-bin libxmlsec1 libxmlsec1-dev
   script:
     - make gitlab-python-testing
   artifacts:
     paths:
       - eventol/htmlcov
 
-react-testing:
-  image: node:16
-  stage: testing
-  script:
-    - make gitlab-react-testing
-  artifacts:
-    paths:
-      - eventol/front/coverage
-
 python-lint:
-  image: python:3.9.6
+  image: python:3.12-bookworm
   stage: styling
   allow_failure: true
+  before_script:
+    - apt-get update -y
   script:
     - make gitlab-python-lint
-
-react-lint-report:
-  image: node:16
-  stage: styling
-  allow_failure: true
-  script:
-    - make gitlab-react-lint-with-report
-  artifacts:
-    paths:
-      - eventol/front/report.html
-
-react-lint:
-  image: node:16
-  stage: styling
-  allow_failure: true
-  script:
-    - make gitlab-react-lint
-
-sass-lint-report:
-  image: node:16
-  stage: styling
-  allow_failure: true
-  script:
-    - make gitlab-react-sasslint-with-report
-  artifacts:
-    paths:
-      - eventol/front/scss-lint-report.html
-
-sass-lint:
-  image: node:16
-  stage: styling
-  allow_failure: true
-  script:
-    - make gitlab-react-sasslint
 
 deploy:
   stage: deploy

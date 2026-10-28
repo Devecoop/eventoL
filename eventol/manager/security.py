@@ -4,17 +4,21 @@ from django.conf import settings
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import available_attrs
+from django.urls import reverse
 
 from manager.constants import (
-    ADD_ATTENDEE_PERMISSION_CODE_NAME, ADD_ATTENDEE_PERMISSION_NAME,
-    CAN_TAKE_ATTENDANCE_PERMISSION_CODE_NAME, CAN_TAKE_ATTENDANCE_PERMISSION_NAME,
-    CHANGE_ATTENDEE_PERMISSION_CODE_NAME, CHANGE_ATTENDEE_PERMISSION_NAME,
-    ORGANIZER_GROUP_NAME, ORGANIZER_PERMISSION_CODE_NAMES, REPORTER_GROUP_NAME,
-    REPORTER_PERMISSION_CODE_NAMES
+    ADD_ATTENDEE_PERMISSION_CODE_NAME,
+    ADD_ATTENDEE_PERMISSION_NAME,
+    CAN_TAKE_ATTENDANCE_PERMISSION_CODE_NAME,
+    CAN_TAKE_ATTENDANCE_PERMISSION_NAME,
+    CHANGE_ATTENDEE_PERMISSION_CODE_NAME,
+    CHANGE_ATTENDEE_PERMISSION_NAME,
+    ORGANIZER_GROUP_NAME,
+    ORGANIZER_PERMISSION_CODE_NAMES,
+    REPORTER_GROUP_NAME,
+    REPORTER_PERMISSION_CODE_NAMES,
 )
 from manager.models import Activity, Attendee, Collaborator, Installer, Organizer, Reviewer
 
@@ -22,8 +26,9 @@ from manager.models import Activity, Attendee, Collaborator, Installer, Organize
 def get_or_create_attendance_permission():
     content_type = ContentType.objects.get_for_model(Attendee)
     attendance_permission, _ = Permission.objects.get_or_create(
-        codename=CAN_TAKE_ATTENDANCE_PERMISSION_CODE_NAME, content_type=content_type,
-        defaults=dict(name=CAN_TAKE_ATTENDANCE_PERMISSION_NAME)
+        codename=CAN_TAKE_ATTENDANCE_PERMISSION_CODE_NAME,
+        content_type=content_type,
+        defaults={'name': CAN_TAKE_ATTENDANCE_PERMISSION_NAME},
     )
     return attendance_permission
 
@@ -32,13 +37,15 @@ def add_attendance_permission(user):
     content_type = ContentType.objects.get_for_model(Attendee)
 
     add_attendee_permission, _ = Permission.objects.get_or_create(
-        codename=ADD_ATTENDEE_PERMISSION_CODE_NAME, content_type=content_type,
-        defaults=dict(name=ADD_ATTENDEE_PERMISSION_NAME)
+        codename=ADD_ATTENDEE_PERMISSION_CODE_NAME,
+        content_type=content_type,
+        defaults={'name': ADD_ATTENDEE_PERMISSION_NAME},
     )
 
     change_attendee_permission, _ = Permission.objects.get_or_create(
-        codename=CHANGE_ATTENDEE_PERMISSION_CODE_NAME, content_type=content_type,
-        defaults=dict(name=CHANGE_ATTENDEE_PERMISSION_NAME)
+        codename=CHANGE_ATTENDEE_PERMISSION_CODE_NAME,
+        content_type=content_type,
+        defaults={'name': CHANGE_ATTENDEE_PERMISSION_NAME},
     )
 
     user.user_permissions.add(add_attendee_permission)
@@ -89,7 +96,7 @@ def user_has_role(user, role, event_slug=None, check_is_organizer=True):
         return False
 
     if role.objects.filter(
-            event_user__user=user, event_user__event__event_slug=event_slug
+        event_user__user=user, event_user__event__event_slug=event_slug
     ).exists():
         return True
 
@@ -128,11 +135,11 @@ def are_activities_public(user, event_slug=None):
     if not settings.PRIVATE_ACTIVITIES:
         return True
 
-    if user.is_authenticated():
+    if user.is_authenticated:
         return is_reviewer(user, event_slug=event_slug)
 
     raise PermissionDenied(
-        "Only organizers and collaborators are authorized to access the activities list."
+        'Only organizers and collaborators are authorized to access the activities list.'
     )
 
 
@@ -142,25 +149,28 @@ def is_activity_public():
 
     If activities are private only will return true for collaborator users or activity owner
     """
+
     def decorator(view_func):
-        @wraps(view_func, assigned=available_attrs(view_func))
+        @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             activity_id = kwargs['activity_id']
             user = request.user
             activity = get_object_or_404(Activity, pk=activity_id)
             event_slug = kwargs['event_slug']
 
-            if any([
-                    activity.status == "2",  # Accepted
+            if any(
+                [
+                    activity.status == '2',  # Accepted
                     not settings.PRIVATE_ACTIVITIES,
                     activity.owner.user == user,
-                    user.is_authenticated() and is_reviewer(user, event_slug=event_slug)
-            ]):
+                    user.is_authenticated and is_reviewer(user, event_slug=event_slug),
+                ]
+            ):
                 return view_func(request, *args, **kwargs)
             raise PermissionDenied(
-                "Only organizers and collaborators are authorized "
-                "to access the activities list."
+                'Only organizers and collaborators are authorized to access the activities list.'
             )
+
         return _wrapped_view
 
     return decorator
@@ -174,20 +184,12 @@ def user_passes_test(test_func, name_redirect):
     """
 
     def decorator(view_func):
-        @wraps(view_func, assigned=available_attrs(view_func))
+        @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            if 'event_slug' in kwargs.keys():
-                event_slug = kwargs['event_slug']
-            else:
-                event_slug = args[0]
+            event_slug = kwargs['event_slug'] if 'event_slug' in kwargs else args[0]
             if test_func(request.user, event_slug=event_slug):
                 return view_func(request, *args, **kwargs)
-            return HttpResponseRedirect(
-                reverse(
-                    name_redirect,
-                    args=[event_slug]
-                )
-            )
+            return HttpResponseRedirect(reverse(name_redirect, args=[event_slug]))
 
         return _wrapped_view
 
