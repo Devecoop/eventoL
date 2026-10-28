@@ -33,12 +33,11 @@
           <div class="content">
             <p><img alt="logo" class="logo" src="{% if EVENTOL_SETTINGS.logo_landing %}{{ EVENTOL_SETTINGS.logo_landing.url }}{% else %}{% static 'manager/img/logo.png' %}{% endif %}" /></p>
             {% if user.is_authenticated %}<a class="btn btn-raised btn-warning btn-create-event" href="{% url 'create_event' %}">{% home_trans 'Create event' %}</a>{% endif %}
-            <h2>{% if EVENTOL_SETTINGS.message and EVENTOL_SETTINGS.message.strip %}{{ EVENTOL_SETTINGS.message }}{% else %}{% home_trans 'Search your event' %}{% endif %}</h2>
+            <h1 class="page-title">{% if EVENTOL_SETTINGS.message and EVENTOL_SETTINGS.message.strip %}{{ EVENTOL_SETTINGS.message }}{% else %}{% home_trans 'Search your event' %}{% endif %}</h1>
             <form class="search" id="search" action="{% url 'home' %}" method="get" hx-get="{% url 'home_search' %}" hx-target="#home-search-results" hx-sync="this:replace">
               <input id="search-input" name="search" placeholder="{% home_trans 'Search by title…' %}" type="search" value="{{ request.GET.search|default:'' }}" />
             </form>
           </div>
-          <div class="overlay"></div>
         </div>
         <div id="home-search-results">{% include 'home/search_results.html' %}</div>
         {% for section in sections %}{% include 'home/section.html' %}{% endfor %}

@@ -1,0 +1,144 @@
+// sass-lint:disable no-misspelled-properties
+// The installed Sass linter predates the native CSS gap property.
+@import './components';
+
+h1,
+.h1,
+.page-title {
+  @include design-heading($design-font-page-title, $design-font-page-title-mobile);
+}
+
+h2,
+.h2,
+.section-title {
+  @include design-heading($design-font-section-title, $design-font-section-title-mobile);
+}
+
+h3,
+.h3,
+.card-title {
+  @include design-heading($design-font-card-title, $design-font-card-title-mobile);
+}
+
+h4,
+h5,
+h6,
+.h4,
+.h5,
+.h6 {
+  @include design-heading($design-font-body-size, $design-font-body-size);
+}
+
+.page-content {
+  margin: 0 auto;
+  max-width: $design-page-width;
+  min-width: 0;
+
+  .page-header {
+    margin-bottom: $design-page-gap;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  .page-heading-row,
+  .page-actions {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: $design-space-4;
+  }
+
+  .page-heading-row {
+    justify-content: space-between;
+  }
+
+  .page-actions {
+    gap: $design-space-2;
+  }
+
+  .card {
+    margin-bottom: $design-page-gap;
+  }
+
+  .card-header {
+    background: transparent;
+    margin-bottom: $design-space-4;
+    padding: 0 0 $design-space-4;
+
+    .page-title,
+    .card-title {
+      margin-bottom: 0;
+    }
+  }
+
+  .card-body {
+    padding: 0;
+  }
+
+  .form-section-title {
+    flex-basis: 100%;
+    margin-top: $design-space-6;
+  }
+
+  .form-text,
+  .help-block,
+  .invalid-feedback {
+    font-size: $design-font-help;
+    line-height: $design-line-height;
+  }
+
+  .form-group {
+    margin-bottom: $design-space-6;
+  }
+}
+
+.page-subtitle {
+  display: block;
+  font-size: $design-font-label;
+  font-weight: $design-weight-normal;
+  line-height: $design-line-height;
+  margin-top: $design-space-2;
+}
+
+.activity-heading-title {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  gap: $design-space-2;
+
+  .btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+.schedule-grid {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.form-separator {
+  color: $design-muted;
+  font-size: $design-font-label;
+  margin: $design-space-6 0;
+  text-align: center;
+}
+
+@media (max-width: $design-breakpoint-type - 1) {
+  .page-content {
+    padding-left: 0;
+    padding-right: 0;
+
+    .card {
+      padding: $design-panel-padding-mobile;
+    }
+  }
+}

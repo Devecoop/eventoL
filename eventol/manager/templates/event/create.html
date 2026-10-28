@@ -20,9 +20,7 @@
     </style>
 
 {% endblock %}
-{% block page-header %}
-    {% trans 'Create an event' %}
-{% endblock %}
+{% block page-header %}<h1 class="page-title">{% if form.instance.pk %}{% trans 'Edit event' %}{% else %}{% trans 'Create an event' %}{% endif %}</h1>{% endblock %}
 {% block page-name %}
     {% trans 'Create an event' %}
 {% endblock %}
@@ -44,28 +42,24 @@
                 {% endif %}
 
                 <div class="col-sm-10 offset-sm-1 col-12">
-                    <br>
+
                     <div class="row">
-                      <h4>{% trans "What's the name of your event?" %}</h4>
+                      <h2 class="section-title form-section-title">{% trans "What's the name of your event?" %}</h2>
                       <div class="col-sm-10 offset-sm-1 col-12">
                           {% include "form_field.html" with field=form.name only %}
                       </div>
                     </div>
 
-                    </br>
-                    </br>
-
                     <div class="row">
-                      <h4 style="margin-bottom: -20px;">{% trans 'Select tags for your event' %}</h4>
+                      <h2 class="section-title form-section-title">{% trans 'Select tags for your event' %}</h2>
                       <div class="col-12">
                         {% include "form_field.html" with field=form.tags %}
                       </div>
                     </div>
 
                     <div class="row">
-                      <br>
-                      <br>
-                      <h4>{% trans "Select features for your event" %}</h4>
+
+                      <h2 class="section-title form-section-title">{% trans "Select features for your event" %}</h2>
                       <div class="col-12 form-row">
                         <div class="col-sm-4">
                           {% include "form_field.html" with field=form.use_installations only %}
@@ -94,19 +88,14 @@
                       </div>
                     </div>
 
-                    </br>
-                    </br>
-
                     <div class="row">
-                      <h4>{% trans 'Activity proposal form text' %}</h4>
+                      <h2 class="section-title form-section-title">{% trans 'Activity proposal form text' %}</h2>
                       <div class="col-12">
                         {% include "form_field.html" with field=form.activities_proposal_form_text only %}
                       </div>
                     </div>
 
-                    </br>
-                    </br>
-                    <h4>{% trans 'When will your event be?' %}</h4>
+                    <h2 class="section-title form-section-title">{% trans 'When will your event be?' %}</h2>
 
                     <div class="row">
                         <div class="col-sm-10 offset-sm-1">
@@ -116,27 +105,22 @@
 
                     {% include "event/event-date-formset.html" %}
 
-                    <h4>{% trans "Choose a Time Zone" %}</h4>
+                    <h2 class="section-title form-section-title">{% trans "Choose a Time Zone" %}</h2>
                     <div class="row">
                         <div class="offset-md-3 col-md-6 col-sm-10 offset-sm-1">
                             {% include "form_field.html" with field=form.tz_event %}
                         </div>
                     </div>
 
-                    <br>
-                    <br>
-                    <h4>{% trans "Choose an URL" %}</h4>
-                    <br>
+                    <h2 class="section-title form-section-title">{% trans "Choose an URL" %}</h2>
+
                     <div class="row">
                         <div class="offset-md-3 col-md-6 col-sm-10 offset-sm-1">
                             {% include "form_field.html" with field=form.event_slug only %}
                         </div>
                     </div>
 
-                    <br>
-                    <br>
-                    <h4>{% trans "Where can people contact you?" %}</h4>
-                    <br>
+                    <h2 class="section-title form-section-title">{% trans "Where can people contact you?" %}</h2>
 
                     <div class="row">
                         <div class="offset-md-3 col-md-6 col-sm-10 offset-sm-1">
@@ -149,18 +133,13 @@
                             {% include "form_field.html" with field=form.show_contact_by_email only %}
                         </div>
                     </div>
-                    <br>
-                    <br>
 
-                    <h4>{% trans "Where can people follow you?" %}</h4>
-                    <br>
+                    <h2 class="section-title form-section-title">{% trans "Where can people follow you?" %}</h2>
 
                     {% include "event/contacts-formset.html" %}
 
-                    <br>
-                    <br>
+                    <h2 class="section-title form-section-title">{% trans 'Where will your event be?' %}</h2>
 
-                    <h4>{% trans 'Where will your event be?' %}</h4>
                     <div class="row">
                         <div class="col-md-10 offset-md-1 col-12">
                             <div class="form-group">
@@ -175,10 +154,8 @@
                         </div>
                     </div>
 
-                    <br>
-                    <br>
                     <div class='event-limit_proposal_date'>
-                        <h4>{% trans 'When is the last day to submit talk proposals?' %}</h4>
+                        <h2 class="section-title form-section-title">{% trans 'When is the last day to submit talk proposals?' %}</h2>
                         {% if form.limit_proposal_date.errors|length > 0 %}
                             <div class="alert alert-dismissable alert-danger">
                                 <button type="button" class="close" data-dismiss="alert">×</button>
@@ -198,43 +175,36 @@
                                 {% include "form_field.html" with field=form.limit_proposal_date only %}
                             </div>
                         </div>
-                        <br>
-                        <br>
+
                     </div>
 
-                    <h4>{% trans "Do you want to use your own homepage?" %}</h4>
+                    <h2 class="section-title form-section-title">{% trans "Do you want to use your own homepage?" %}</h2>
                     <p>{% trans "You probably don't want to. But if you want, we can link to your page in our index. Provide the full URL here:" %}</p>
-                    <br>
-                    <br>
+
                     <div class="row">
                         <div class="offset-md-3 col-md-6 col-sm-10 offset-sm-1">
                             {% include "form_field.html" with field=form.external_url only %}
                         </div>
                     </div>
-                    <br>
-                    <br>
 
-                    <h4>{% trans "Please provide an abstract about your event" %}</h4>
-                    <br>
+                    <h2 class="section-title form-section-title">{% trans "Please provide an abstract about your event" %}</h2>
+
                     <div class="row">
                         <div class="col-12">
                             {% include "form_field.html" with field=form.abstract only %}
                         </div>
                     </div>
-                    <br>
-                    <br>
 
-                    <h4>{% trans "Please provide as much information you can about your event" %}</h4>
-                    <br>
-                    <br>
+                    <h2 class="section-title form-section-title">{% trans "Please provide as much information you can about your event" %}</h2>
+
                     <div class="row">
                         <div class="col-12">
                             {% include "form_field.html" with field=form.event_information only %}
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-lg btn-raised float-right float-btn">
+                    <div class="form-group form-actions">
+                        <button type="submit" class="btn btn-primary btn-raised float-right">
                             {% trans "Submit" %}
                         </button>
                     </div>
@@ -243,7 +213,6 @@
         </div>
     </div>
 {% endblock %}
-
 
 {% block material %}
     <script>
@@ -289,7 +258,6 @@
         });
     </script>
 {% endblock %}
-
 
 {% block other-script %}
     <script>

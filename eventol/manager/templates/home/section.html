@@ -2,11 +2,11 @@
 {% if section.events or section.show_empty %}
 <div class="title-list" data-loaded="true" id="{{ section.id }}">
   <div class="category-title">
-    <h1>{% home_trans section.title %}</h1>
+    <h2 class="section-title">{% home_trans section.title %}</h2>
     <div class="home-slider" data-home-slider>
       {% for event in section.events %}
       <div>
-        <article class="item home-event-card" role="link" tabindex="0" data-event-url="{% url 'index' event.event_slug %}">
+        <article class="home-event-card" role="link" tabindex="0" data-event-url="{% url 'index' event.event_slug %}">
           {% if event.home_image %}
           <div class="home-event-media"><img src="{{ event.home_image }}" alt="{{ event.name }}" loading="lazy" /></div>
           {% elif event.place %}
@@ -15,7 +15,7 @@
           <div class="home-event-media home-event-placeholder"><img src="{% static 'manager/img/logo.png' %}" alt="" loading="lazy" /></div>
           {% endif %}
           <div class="home-event-info">
-            <h2 class="home-event-title">{{ event.name }}</h2>
+            <h3 class="home-event-title">{{ event.name }}</h3>
             {% if event.last_date %}<time class="home-event-date" datetime="{{ event.last_date|date:'Y-m-d' }}">{{ event.last_date|date:'D j M Y' }}</time>{% endif %}
             {% if event.home_place %}<p class="home-event-place">{{ event.home_place }}</p>{% endif %}
             <p class="home-event-description">{{ event.abstract }}</p>
@@ -28,10 +28,10 @@
       </div>
       {% empty %}
       <div>
-        <div class="item home-event-card">
+        <div class="home-event-card">
           <div class="home-event-media home-event-placeholder"><img src="{% static 'manager/img/logo.png' %}" alt="" /></div>
           <div class="home-event-info">
-            <h2 class="home-event-title">{% home_trans 'Event not found' %}</h2>
+            <h3 class="home-event-title">{% home_trans 'Event not found' %}</h3>
             <p class="home-event-description">{% home_trans 'No Event found in your search' %}</p>
           </div>
         </div>
