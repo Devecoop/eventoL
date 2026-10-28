@@ -205,6 +205,23 @@
 }
 
 @media (max-width: $design-breakpoint-navigation - 1) {
+  .nav-narrow {
+    .nav-right {
+      [data-menu-toggle] {
+        display: block;
+        margin-left: auto;
+        overflow: hidden;
+      }
+
+      .narrow-links {
+        background: $design-menu-background;
+        clear: both;
+        max-height: calc(100vh - #{$design-space-8 * 2} - 2rem);
+        overflow-y: auto;
+      }
+    }
+  }
+
   .logo-component {
     position: absolute;
   }

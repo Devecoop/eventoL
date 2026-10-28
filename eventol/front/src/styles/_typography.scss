@@ -59,7 +59,14 @@ h6,
   }
 
   .card {
+    font-size: $design-font-body-size;
+    line-height: $design-line-height;
     margin-bottom: $design-page-gap;
+
+    // Override Material Design's more specific heading and card text defaults.
+    .card-title {
+      @include design-heading($design-font-card-title, $design-font-card-title-mobile);
+    }
   }
 
   .card-header {
