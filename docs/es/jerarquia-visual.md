@@ -1,101 +1,162 @@
-# Jerarquía visual compartida
+# Resumen del diseño visual de eventoL
 
-Actualizada el 28 de octubre de 2026. La tipografía y los espaciados usan Sass,
-Bootstrap y Bootstrap Material Design existentes, sin dependencias nuevas.
+Estado al 28 de octubre de 2026.
 
-## Escala
+La renovación visual unifica la home y las pantallas internas mediante una
+paleta, una escala tipográfica y espaciados compartidos. La home se renderiza
+con plantillas Django y usa HTMX para actualizar los resultados de búsqueda;
+React continúa en las pantallas que lo utilizan. Los estilos mantienen Sass,
+Bootstrap 4 y Bootstrap Material Design, sin incorporar otro framework de CSS.
 
-| Rol | Escritorio (desde 768 px) | Móvil | Uso |
+La configuración del diseño se concentra en variables Sass para personalizar
+colores, fuentes, tamaños, pesos, bordes, sombras y dimensiones. Se conserva el
+fondo claro verdoso, las tarjetas oscuras de eventos y el acento verde, con
+superficies claras para formularios y paneles internos.
+
+## Apariencia y comportamiento actuales
+
+La home comparte la jerarquía de títulos con el resto de la aplicación y tiene
+estilos propios para portada, buscador, carruseles y tarjetas. Sus párrafos usan
+el tamaño de cuerpo común. El menú móvil tiene fondo opaco, foco de teclado y
+desplazamiento interno cuando no entra en pantalla. La navegación de escritorio
+se activa desde 950 px.
+
+Las pantallas de cuenta, eventos, actividades, inscripción, salas y reportes
+usan roles de página, sección y tarjeta. Los títulos de tarjetas prevalecen
+sobre los valores predeterminados de Material Design, y los párrafos de los
+paneles heredan el cuerpo compartido. Las portadas de las vistas React de
+etiquetas e instancia se adaptan al contenido para evitar superposiciones.
+
+Los formularios organizan campos y acciones dentro del flujo de la página,
+con campos de ancho completo en móvil. El cronograma permite desplazamiento
+horizontal dentro de su contenedor cuando tiene varias salas. Los títulos
+largos y sus estados pueden distribuirse en varias líneas.
+
+Los cambios de HTML organizan encabezados, contenedores y clases de estilo;
+conservan los campos, destinos y validaciones de formularios. Se mantienen los
+contenidos, con el título de página «Sorteo» incorporado expresamente. Los
+catálogos de traducción afectados por el marcado del acceso mantienen sus
+traducciones. La migración de la home conserva las listas, búsqueda, carruseles,
+mapas y enlaces existentes.
+
+El buscador envía un GET a `/home/search/` y HTMX reemplaza únicamente el bloque
+de resultados. Sin HTMX, la búsqueda funciona como una navegación a la home
+completa. El JavaScript conserva las interacciones y reinicializa los carruseles
+y mapas después de actualizar los resultados. Los logos y el mensaje de portada
+siguen usando la configuración existente de `EventolSetting`.
+
+## Escala y distribución
+
+| Rol | Escritorio, desde 768 px | Móvil | Uso |
 | --- | --- | --- | --- |
-| Título de página | 28 px | 24 px | Un `h1` por pantalla |
-| Sección | 22 px | 20 px | `h2`, por ejemplo las secciones del perfil o el día del cronograma |
-| Tarjeta | 18 px | 18 px | `h3` o clase `card-title`; instrucciones y encabezados de paneles |
+| Página | 28 px | 24 px | Título principal |
+| Sección | 22 px | 20 px | Secciones de contenido |
+| Tarjeta | 18 px | 18 px | Encabezados de paneles y tarjetas |
 | Cuerpo | 16 px | 16 px | Párrafos y campos |
-| Etiqueta | 14 px | 14 px | Etiquetas de campos y subtítulos |
-| Ayuda | 13 px | 13 px | Indicaciones y errores de formularios |
+| Etiqueta | 14 px | 14 px | Etiquetas y texto secundario |
+| Ayuda | 13 px | 13 px | Indicaciones y errores |
 
-Los tamaños se expresan en `rem` respecto de una base de 16 px, para respetar el
-escalado del navegador. Los títulos comparten Roboto, peso 600, interlineado 1.3 y
-corte de palabras largas cuando es necesario. El cuerpo usa peso 400 e
-interlineado 1.5. Los metadatos compactos de las tarjetas de la home conservan
-sus tamaños específicos de 12/14 px.
+Los tamaños de la escala usan `rem` sobre una base de 16 px. Los títulos usan
+Roboto, peso 600 e interlineado 1.3; el cuerpo, peso 400 e interlineado 1.5.
+Las fechas, etiquetas y otros metadatos compactos mantienen sus tamaños
+secundarios; el buscador conserva su fuente configurable.
 
-## Configuración y estructura
+El contenido interno tiene un ancho máximo de 1120 px, separación de 24 px entre
+paneles y relleno de 24 px en escritorio o 16 px en móvil. Las listas de la home
+mantienen sus dimensiones específicas.
 
-- `front/src/styles/_design.scss`: tamaños de cada rol y de su variante móvil,
-  familia, pesos, interlineado, separación entre bloques y ancho de contenido.
-- `styles/_components.scss`: mixin `design-heading` para compartir la misma
-  definición entre Bootstrap, la home y los componentes React existentes.
-- `styles/_typography.scss`: aplica los roles, encabezados, subtítulos, ayudas,
-  acciones de formularios y distribución común de tarjetas.
-- `libs/base.scss`: configura los tamaños de Bootstrap **antes** de importarlo.
-  Se retiró el bloque posterior que volvía a asignar otra familia y peso a todos
-  los encabezados.
-- `manager/templates/base.html`: ya no envuelve otros encabezados o bloques
-  dentro de un `h2`. Cada pantalla declara su título; los encabezados vacíos no
-  agregan un título ni espacio visible.
+## Dónde personalizar
 
-Las variables nuevas principales son `$design-font-page-title`,
-`$design-font-page-title-mobile`, `$design-font-section-title-mobile`,
-`$design-font-card-title-mobile`, `$design-font-label`, `$design-font-help`,
-`$design-heading-line-height` y `$design-breakpoint-type`.
+| Archivo en `eventol/front/src/` | Responsabilidad |
+| --- | --- |
+| `styles/_design.scss` | Variables compartidas con `!default`: paleta, fuentes, escala, espaciados y dimensiones |
+| `styles/variables.scss` | Conexión de los nombres históricos con las variables del diseño |
+| `styles/_components.scss` | Mixins de encabezados, tarjetas, etiquetas, menú y foco |
+| `styles/_typography.scss` | Aplicación de la escala y distribución común de las páginas internas |
+| `libs/base.scss` | Configuración de Bootstrap y Material Design con las variables compartidas |
+| `libs/home.scss` y `styles/home/` | Estilos de navegación, portada y tarjetas de la home |
 
-El ancho de las páginas internas se controla con `$design-page-width` (1120 px).
-Los paneles usan `$design-panel-padding` (24 px),
-`$design-panel-padding-mobile` (16 px) y `$design-page-gap` (24 px). Las listas de
-la home mantienen su ancho específico. Los formularios conservan sus campos,
-nombres, destinos y validaciones; los campos ocupan todo el ancho en móvil y
-las acciones permanecen dentro del flujo del formulario.
+Las variables de `_design.scss` se pueden editar allí o definir antes de importar
+el tema. Por ejemplo:
 
-## Cambios visibles
+```scss
+$design-primary: #175c57 !default;
+$design-background: #edf7f1 !default;
+```
 
-- Perfil: un título principal; conexiones y agregado de cuentas son secciones.
-- Cronograma: título de página y día con importancia diferente. Si existen
-  varias salas, el calendario se desplaza dentro de su contenedor y no ensancha
-  el documento móvil.
-- Formularios: títulos consistentes, ayudas legibles y botones agrupados. El
-  envío del formulario de evento dejó de flotar sobre los campos.
-- Creación/edición de eventos: secciones `h2`, espacios de Sass en lugar de
-  saltos `<br>` repetidos y sin el margen negativo del selector de etiquetas.
-- Actividades: las categorías son secciones y sus tarjetas son encabezados de
-  tercer nivel. El título y la insignia de estado del detalle pueden acomodarse
-  en líneas distintas en móvil.
-- Home: un `h1`, secciones `h2` y nombres de eventos `h3`, usando la misma escala.
-- Etiquetas e información de instancia: los componentes React conservan sus
-  funciones, pero comparten los tamaños. La portada ya no combina una altura
-  fija y un margen negativo con contenido desplazado; sus textos, buscador y
-  listas dejan de superponerse.
-- Acceso: el separador «o» es texto auxiliar, no un encabezado. El enlace de alta
-  hereda el tamaño del párrafo. Se actualizaron y compilaron los siete catálogos
-  que contienen ese mensaje para conservar sus traducciones.
+| Aspecto | Variables principales |
+| --- | --- |
+| Paleta y superficies | `$design-primary`, `$design-background`, `$design-surface`, `$design-text`, `$design-border` |
+| Tarjetas de eventos | `$design-card-background`, `$design-card-text`, `$design-card-muted`, `$design-media-height` |
+| Fuentes y tamaños | `$design-font-body`, `$design-font-heading`, `$design-font-search`, `$design-font-body-size`, `$design-font-page-title`, `$design-font-section-title`, `$design-font-card-title` |
+| Menú | `$design-menu-background`, `$design-menu-opacity`, `$design-breakpoint-navigation` |
+| Espaciados y distribución | `$design-space-*`, `$design-panel-padding`, `$design-panel-padding-mobile`, `$design-page-width`, `$design-page-gap` |
+| Estados y efectos | `$design-success`, `$design-danger`, `$design-focus-shadow`, `$design-card-shadow`, `$design-radius-*` |
 
-## Verificación del 28 de octubre
+Los valores derivados se calculan al compilar; una familia tipográfica nueva
+requiere cargar también su fuente. Las variables no agregan un selector de temas
+en tiempo de ejecución ni una configuración de estilos desde el administrador.
+Los widgets externos y estilos heredados conservan reglas particulares que deben
+revisarse cuando se personalizan. El número de tarjetas y los puntos de cambio
+de los carruseles siguen definidos en `front/src/utils/constants.js`.
 
-- 226 pruebas de backend aprobadas con el adaptador temporal de Autofixture/Pillow
-  ya documentado. Después de los últimos ajustes de plantillas, se repitieron
-  las 18 pruebas de home y la comprobación Django, sin errores.
-- 197 pruebas de frontend, 34 suites y 91 snapshots aprobados. Se revisaron y
-  actualizaron los 11 snapshots afectados por los cambios intencionales de
-  `h2` a `h1`, `h1` a `h2` y la separación de una instrucción en párrafo.
-- Compilación de producción correcta, con las advertencias existentes de tamaño.
-  Sass lint de los SCSS afectados y ESLint del JSX modificado sin incidencias.
-- 50 pantallas/estados de la aplicación en Chrome a 1440 y 390 px: 100 capturas,
-  un único título principal no vacío por documento y tamaños de página de
-  28/24 px. Se revisaron capturas completas y se comprobaron dimensiones de texto.
-- Perfil, cronograma y formulario de sala además a 320/768/1000 px: nueve
-  comprobaciones, con títulos largos sin espacios, sin desbordamiento del
-  documento. El calendario también se comprobó con varias salas.
-- Envío real del formulario de sala con CSRF y búsqueda HTMX conservando el
-  documento, con la jerarquía nueva de las tarjetas.
-- Las pruebas utilizaron una base y un servidor temporales; no se agregaron datos
-  de prueba a la base local. Los auxiliares se retiran al terminar.
+La home se organiza en `manager/home.py`, `manager/templates/index.html`,
+`manager/templates/home/` y `front/src/libs/home.js`. El bundle `HomeTemplates`
+contiene sus interacciones y estilos; HTMX se sirve desde
+`manager/static/manager/vendor/htmx/`. La API REST y los bundles React de las
+demás pantallas siguen disponibles.
 
-Capturas, resultados y scripts temporales: `/tmp/eventol-hierarchy-validation/`.
-Las capturas anteriores de comparación siguen en `/tmp/eventol-flow-audit/`.
-Las carpetas de `/tmp` pueden eliminarse al reiniciar o limpiar el equipo.
+## Compilar y comprobar
 
-Esta verificación se concentra en la jerarquía y distribución de la aplicación.
-El administrador Django usa sus propios estilos y no se modificó. Siguen
-pendientes los errores funcionales de CAPTCHA, sorteos, gráficos de reportes y
-recorte sin ID registrados en `verificacion-flujos.md`; no se presentan como
-resueltos. No se validaron todos los navegadores ni integraciones externas.
+Desde `eventol/front/`, usar los comandos existentes:
+
+```sh
+yarn start    # desarrollo con recompilación
+yarn build    # generar los bundles de producción
+yarn sasslint
+yarn eslint
+yarn test --runInBand
+```
+
+Los cambios de variables Sass requieren recompilar. Al modificar colores,
+revisar contraste, foco y estados; al modificar dimensiones, revisar menús,
+formularios y carruseles en escritorio y móvil. Los catálogos de traducción se
+compilan con `python eventol/manage.py compilemessages` desde la raíz del proyecto,
+como parte del proceso habitual de despliegue.
+
+## Verificación y límites
+
+El trabajo incluye pruebas de backend y frontend, comprobaciones de Django,
+compilación y revisión visual. Las suites ejecutadas durante el desarrollo
+registraron 226 pruebas de backend y 197 de frontend aprobadas. El backend
+requirió un adaptador temporal de compatibilidad entre Autofixture y Pillow;
+no se modificaron las dependencias del producto para esa ejecución.
+
+La comprobación más reciente de estilos pasó Sass lint y compilación de
+producción, con las advertencias existentes de tamaño de bundles. Se guardaron
+23 capturas: ocho pantallas a 1440/390 px, el menú a 320/390/768/949 px, el cambio
+a escritorio desde 950 px y una vista de 320×400 para comprobar scroll y teclado.
+Los títulos de reportes midieron 18 px y peso 600, y los párrafos revisados,
+16 px. No hubo desbordamiento horizontal de documento en ese recorrido.
+
+La evidencia y las comparaciones antes/después están en
+`/tmp/eventol-ajustes-qa-20261028/index.html`. Son archivos temporales y pueden
+eliminarse al limpiar `/tmp`.
+
+La última revisión fue anónima: las pantallas que requieren sesión quedan
+pendientes de verificación con sus permisos reales. No se enviaron formularios
+ni se verificaron todos los navegadores o servicios externos. El administrador
+Django conserva sus estilos propios. Siguen pendientes estas fallas funcionales,
+que no se presentan como resueltas por el cambio visual:
+
+| Área | Problema registrado |
+| --- | --- |
+| CAPTCHA | La imagen devuelve HTTP 500 por el uso de `getsize` de Pillow en la dependencia instalada. Impide leer el desafío del formulario. |
+| Sorteos | Faltan los archivos JS/CSS de `jquery-slotmachine`; el botón de inicio falla porque el plugin no está disponible. |
+| Reportes | Una fecha sin asistencias puede omitir el contenedor que el script de gráficos intenta inicializar. |
+| Recorte de actividad | La ruta sin identificador devuelve HTTP 500 porque la vista requiere `activity_id`. |
+
+Para repetir pruebas que guarden datos, usar una base, archivos y correo de
+prueba aislados. El adaptador temporal de Pillow usado para las suites no debe
+ocultar la falla real del CAPTCHA al revisar la interfaz. No se validaron cámara
+y lectura física de QR, acceso OAuth real ni entrega SMTP.

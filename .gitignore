@@ -62,6 +62,9 @@ coverage/
 data/
 db.sqlite3
 /CONTEXTO.md
+/docs/es/diseno-personalizable.md
+/docs/es/home-django-htmx.md
+/docs/es/verificacion-flujos.md
 my_settings.py
 deploy.txt
 deploy/docker/.env
