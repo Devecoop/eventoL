@@ -16,14 +16,8 @@ pytestmark = pytest.mark.django_db
 def paid_event(event, captcha_passes):
     EventDate.objects.create(event=event, date=timezone.localdate() + timedelta(days=10))
     event.is_paid = True
-    event.ticket_price = Decimal('1000')
     event.save()
     return event
-
-
-def purchase_url(event, quantity=None):
-    url = reverse('event_purchase', args=[event.event_slug])
-    return f'{url}?quantity={quantity}' if quantity else url
 
 
 def purchase_data(*dnis, emails=None):
@@ -51,60 +45,99 @@ def purchase_data(*dnis, emails=None):
     return data
 
 
-def test_purchase_asks_for_the_quantity_first(client, paid_event, seller):
-    response = client.get(purchase_url(paid_event))
+def url_for(event, *pairs):
+    url = reverse('event_purchase', args=[event.event_slug])
+    query = '&'.join(f'type_{ticket_type.pk}={number}' for ticket_type, number in pairs)
+    return f'{url}?{query}' if query else url
+
+
+def test_purchase_asks_for_the_ticket_types_first(client, paid_event, seller, general, vip):
+    response = client.get(url_for(paid_event))
     assert response.status_code == 200
-    assert 'quantity_form' in response.context
+    form = response.context['selection_form']
+    assert [field.label for field in form] == ['General', 'VIP']
     assert 'formset' not in response.context
 
 
-def test_quantity_choices_are_limited_by_the_quota(client, paid_event, seller):
-    paid_event.ticket_quota = 3
+def test_quantity_choices_are_limited_by_the_quota(client, paid_event, seller, general, vip):
+    response = client.get(url_for(paid_event))
+    fields = response.context['selection_form'].fields
+    assert [value for value, _label in fields[f'type_{vip.pk}'].choices] == [0, 1, 2]
+    assert len(fields[f'type_{general.pk}'].choices) == 11
+
+
+def test_at_least_one_ticket(client, paid_event, seller, general):
+    response = client.get(url_for(paid_event, (general, 0)))
+    assert response.context['selection_form'].non_field_errors()
+
+
+def test_up_to_ten_tickets_by_order(client, paid_event, seller, general, vip):
+    response = client.get(url_for(paid_event, (general, 9), (vip, 2)))
+    assert response.context['selection_form'].non_field_errors()
+
+
+def test_event_capacity_is_checked_on_the_selection(client, paid_event, seller, general, vip):
+    paid_event.ticket_quota = 2
     paid_event.save()
-    response = client.get(purchase_url(paid_event))
-    choices = response.context['quantity_form'].fields['quantity'].choices
-    assert [value for value, _label in choices] == [1, 2, 3]
+    response = client.get(url_for(paid_event, (general, 2), (vip, 1)))
+    assert response.context['selection_form'].non_field_errors()
+
+
+def test_attendees_form_shows_the_chosen_types(client, paid_event, seller, general, vip):
+    response = client.get(url_for(paid_event, (general, 2), (vip, 1)))
+    assert [form.ticket_type for form in response.context['formset']] == [general, general, vip]
+    assert response.context['total'] == Decimal('5000')
 
 
 def test_purchase_creates_the_order_and_redirects_to_mercado_pago(
-    client, paid_event, seller, preference
+    client, paid_event, seller, preference, general, vip
 ):
-    response = client.post(purchase_url(paid_event, 2), purchase_data('30.000.000', '30000001'))
+    response = client.post(
+        url_for(paid_event, (general, 1), (vip, 1)), purchase_data('30.000.000', '30000001')
+    )
     assert response.status_code == 302
     assert response.url == 'https://mp.test/checkout'
     order = Order.objects.get()
     assert order.quantity == 2
-    assert order.total == Decimal('2000')
+    assert order.total == Decimal('4000')
     assert order.buyer_email == 'ana@example.com'
-    assert sorted(order.items.values_list('dni', flat=True)) == ['30000000', '30000001']
+    assert sorted(order.items.values_list('dni', 'ticket_type__name')) == [
+        ('30000000', 'General'),
+        ('30000001', 'VIP'),
+    ]
 
 
-def test_purchase_rejects_repeated_dni(client, paid_event, seller, preference):
-    response = client.post(purchase_url(paid_event, 2), purchase_data('30000000', '30000000'))
+def test_purchase_rejects_repeated_dni(client, paid_event, seller, preference, general):
+    response = client.post(url_for(paid_event, (general, 2)), purchase_data('30000000', '30000000'))
     assert response.status_code == 200
     assert response.context['formset'].non_form_errors()
     assert not Order.objects.exists()
 
 
-def test_purchase_rejects_dni_with_ticket(client, paid_event, seller, preference):
+def test_purchase_rejects_dni_with_ticket(client, paid_event, seller, preference, general):
     Attendee.objects.create(event=paid_event, email='old@example.com', dni='30000000')
-    response = client.post(purchase_url(paid_event, 1), purchase_data('30000000'))
+    response = client.post(url_for(paid_event, (general, 1)), purchase_data('30000000'))
     assert response.status_code == 200
     assert response.context['formset'].forms[0].errors['dni']
     assert not Order.objects.exists()
 
 
-def test_purchase_without_tickets_left(client, paid_event, seller, preference):
-    paid_event.ticket_quota = 1
-    paid_event.save()
-    client.post(purchase_url(paid_event, 1), purchase_data('30000000'))
-    response = client.get(purchase_url(paid_event))
-    assert response.context['available'] == 0
-    assert 'quantity_form' not in response.context
+def test_purchase_without_tickets_left(client, paid_event, seller, preference, vip):
+    client.post(url_for(paid_event, (vip, 2)), purchase_data('30000000', '30000001'))
+    response = client.get(url_for(paid_event))
+    assert response.context['sold_out']
+    assert 'selection_form' not in response.context
+
+
+def test_paid_event_without_ticket_types(client, paid_event, seller):
+    response = client.get(url_for(paid_event))
+    assert not response.context['ticket_types']
+    assert 'selection_form' not in response.context
+    assert 'Tickets coming soon' in response.content.decode()
 
 
 def test_purchase_of_free_event_goes_to_registration(client, event):
-    response = client.get(purchase_url(event))
+    response = client.get(url_for(event))
     assert response.url == reverse('attendee_registration', args=[event.event_slug])
 
 
