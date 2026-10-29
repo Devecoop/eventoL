@@ -80,3 +80,38 @@
         </script>
     </div>
 </div>
+<script>
+    // The formset plugin of the form bundle only handles its own formsets: add and delete rows here
+    (function () {
+        var formset = document.getElementById('ticket-types-formset');
+        var prefix = formset.dataset.formsetPrefix;
+        var body = formset.querySelector('[data-formset-body]');
+        var total = formset.querySelector('[name="' + prefix + '-TOTAL_FORMS"]');
+        var template = formset.querySelector('[data-formset-empty-form]');
+
+        function bindDelete(form) {
+            var button = form.querySelector('[data-formset-delete-button]');
+            if (!button) {
+                return;
+            }
+            button.addEventListener('click', function () {
+                var checkbox = form.querySelector('input[name$="-DELETE"]');
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+                form.style.display = 'none';
+            });
+        }
+
+        body.querySelectorAll('[data-formset-form]').forEach(bindDelete);
+        formset.querySelector('[data-formset-add]').addEventListener('click', function () {
+            var index = parseInt(total.value, 10);
+            var wrapper = document.createElement('div');
+            wrapper.innerHTML = template.textContent.replace(/__prefix__/g, index).trim();
+            var form = wrapper.firstElementChild;
+            body.appendChild(form);
+            total.value = index + 1;
+            bindDelete(form);
+        });
+    })();
+</script>
