@@ -68,6 +68,8 @@ from manager.forms import (
     InstallerRegistrationForm,
     RejectForm,
     RoomForm,
+    TicketTypeForm,
+    TicketTypeModelFormset,
 )
 from manager.models import (
     Activity,
@@ -88,6 +90,7 @@ from manager.models import (
     Organizer,
     Reviewer,
     Room,
+    TicketType,
 )
 from manager.security import (
     add_attendance_permission,
@@ -1107,10 +1110,16 @@ def create_event(request):
     event_date_formset = event_date_formset(
         request.POST or None, prefix='event-date-form', queryset=EventDate.objects.none()
     )
+    ticket_types_formset = _ticket_types_formset(request, TicketType.objects.none())
     # pylint: enable=unexpected-keyword-arg
 
     if request.POST:
-        if event_form.is_valid() and contacts_formset.is_valid() and event_date_formset.is_valid():
+        if (
+            event_form.is_valid()
+            and contacts_formset.is_valid()
+            and event_date_formset.is_valid()
+            and ticket_types_formset.is_valid()
+        ):
             event_user = None
             the_event = None
             contacts = None
@@ -1130,6 +1139,10 @@ def create_event(request):
                     event_date.event = the_event
                     event_date.save()
 
+                for ticket_type in ticket_types_formset.save(commit=False):
+                    ticket_type.event = the_event
+                    ticket_type.save()
+
                 return redirect(reverse('event_add_image', args=[the_event.event_slug]))
 
         messages.error(
@@ -1145,11 +1158,19 @@ def create_event(request):
             'contacts_formset': contacts_formset,
             'fields_dependencies': Event.get_fields_dependencies(),
             'event_date_formset': event_date_formset,
+            'ticket_types_formset': ticket_types_formset,
         },
     )
 
 
 # pylint: enable=too-many-branches
+
+
+def _ticket_types_formset(request, queryset):
+    formset = modelformset_factory(
+        TicketType, form=TicketTypeForm, formset=TicketTypeModelFormset, can_delete=True
+    )
+    return formset(request.POST or None, prefix='ticket-types-form', queryset=queryset)
 
 
 @login_required
@@ -1175,10 +1196,16 @@ def edit_event(request, event_slug):
         prefix='event-date-form',
         queryset=EventDate.objects.filter(event=event),
     )
+    ticket_types_formset = _ticket_types_formset(request, event.ticket_types.all())
     # pylint: enable=unexpected-keyword-arg
 
     if request.POST:
-        if event_form.is_valid() and contacts_formset.is_valid() and event_date_formset.is_valid():
+        if (
+            event_form.is_valid()
+            and contacts_formset.is_valid()
+            and event_date_formset.is_valid()
+            and ticket_types_formset.is_valid()
+        ):
             try:
                 the_event = event_form.save()
                 contacts = contacts_formset.save(commit=False)
@@ -1192,6 +1219,12 @@ def edit_event(request, event_slug):
 
                 contacts_formset.save()
                 event_date_formset.save()
+
+                for ticket_type in ticket_types_formset.save(commit=False):
+                    ticket_type.event = the_event
+                    ticket_type.save()
+                for ticket_type in ticket_types_formset.deleted_objects:
+                    ticket_type.delete()
 
                 return redirect(reverse('index', args=[the_event.event_slug]))
             except Exception as error_message:
@@ -1211,6 +1244,7 @@ def edit_event(request, event_slug):
                 'protocol': request.scheme,
                 'contacts_formset': contacts_formset,
                 'event_date_formset': event_date_formset,
+                'ticket_types_formset': ticket_types_formset,
                 'fields_dependencies': Event.get_fields_dependencies(),
             },
         ),

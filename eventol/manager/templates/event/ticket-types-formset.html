@@ -1,0 +1,82 @@
+{% load formset_tags %}
+{% load i18n %}
+<div class="row">
+    <div id="ticket-types-formset" data-formset-prefix="{{ ticket_types_formset.prefix }}" class="col-12 col-md-10 offset-md-1">
+        {{ ticket_types_formset.management_form }}
+        <div data-formset-body>
+            {% if ticket_types_formset.non_form_errors %}
+                <div class="alert alert-dismissable alert-danger">
+                    <button type="button" class="close" data-dismiss="alert">×</button>
+                    <ul>
+                        {% for error in ticket_types_formset.non_form_errors %}
+                            <li>{{ error|escape }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% for ticket_type_form in ticket_types_formset %}
+                <div data-formset-form>
+                    <div class="row" style="position: relative;">
+                        {{ ticket_type_form.id }}
+
+                        <div class="col-sm-5 col-12">
+                            {% include "form_field.html" with field=ticket_type_form.name only %}
+                        </div>
+
+                        <div class="col-sm-3 col-6">
+                            {% include "form_field.html" with field=ticket_type_form.price only %}
+                        </div>
+
+                        <div class="col-sm-3 col-4">
+                            {% include "form_field.html" with field=ticket_type_form.quota only %}
+                        </div>
+
+                        <div class="col-sm-1 col-2" style="align-self: center;">
+                            {% if ticket_type_form.DELETE and not ticket_type_form.has_sales %}
+                                <div style="display:none">{{ ticket_type_form.DELETE }}</div>
+                                <button type="button" class="btn btn-danger" data-formset-delete-button>
+                                    <i class="fa fa-times-circle"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="float-right">
+            <a href="javascript:void(0)" class="btn btn-success bmd-btn-fab" id="ticket-types-formset-add" data-formset-add>
+                <i class="material-icons">add</i>
+            </a>
+        </div>
+
+        <script type="form-template" id="ticket-types-formset-empty-form" data-formset-empty-form>
+            {% escapescript %}
+                <div data-formset-form>
+                    <div class="row" style="position:relative;">
+                        {{ ticket_types_formset.empty_form.id }}
+
+                        <div class="col-sm-5 col-12">
+                            {% include "form_field.html" with field=ticket_types_formset.empty_form.name only %}
+                        </div>
+
+                        <div class="col-sm-3 col-6">
+                            {% include "form_field.html" with field=ticket_types_formset.empty_form.price only %}
+                        </div>
+
+                        <div class="col-sm-3 col-4">
+                            {% include "form_field.html" with field=ticket_types_formset.empty_form.quota only %}
+                        </div>
+
+                        <div class="col-sm-1 col-2" style="align-self: center;">
+                            <div style="display:none">{{ ticket_types_formset.empty_form.DELETE }}</div>
+                            <button type="button" class="btn btn-danger" data-formset-delete-button>
+                                <i class="fa fa-times-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endescapescript %}
+        </script>
+    </div>
+</div>

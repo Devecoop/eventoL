@@ -100,17 +100,22 @@
                     <div class="row">
                       <h4>{% trans 'Tickets' %}</h4>
                       <div class="col-12 form-row">
-                        <div class="col-sm-4">
+                        <div class="col-sm-6">
                           {% include "form_field.html" with field=form.is_paid only %}
                         </div>
-                        <div class="col-sm-4">
-                          {% include "form_field.html" with field=form.ticket_price only %}
-                        </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-6">
                           {% include "form_field.html" with field=form.ticket_quota only %}
                         </div>
                       </div>
                     </div>
+
+                    <div class="row">
+                        <div class="col-sm-10 offset-sm-1">
+                            {% trans "Ticket types of a paid event: each one with its price and, optionally, its quota." %}
+                        </div>
+                    </div>
+
+                    {% include "event/ticket-types-formset.html" %}
 
                     </br>
                     </br>
@@ -313,6 +318,7 @@
     <script>
         $(document).ready(function() {
             window.libs.form('{{ form.place.id_for_label }}');
+            $('#ticket-types-formset').formset({animateForms: true});
         });
     </script>
 {% endblock %}
