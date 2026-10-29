@@ -45,6 +45,9 @@ class EventSerializer(EventolSerializer):
     registration_is_open = serializers.BooleanField(read_only=True)
     tags = EventTagFromEventSerializer(many=True, read_only=True)
     image = serializers.SerializerMethodField('get_cropped_image')
+    min_ticket_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
 
     def get_cropped_image(self, instance):
         if instance.image and instance.cropping:
@@ -80,6 +83,8 @@ class EventSerializer(EventolSerializer):
             'last_date',
             'created_at',
             'location',
+            'is_paid',
+            'min_ticket_price',
         )
 
 
