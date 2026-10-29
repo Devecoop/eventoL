@@ -23,6 +23,7 @@ class TicketSelectionForm(forms.Form):
                 choices=[(number, number) for number in range(maximum + 1)],
                 coerce=int,
                 empty_value=0,
+                widget=forms.Select(attrs={'class': 'form-control'}),
                 required=False,
                 initial=0,
             )
