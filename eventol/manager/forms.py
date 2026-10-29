@@ -525,7 +525,6 @@ class EventForm(ModelForm):
             'limit_proposal_date',
             'registration_closed',
             'is_paid',
-            'ticket_price',
             'ticket_quota',
             'email',
             'external_url',
@@ -565,13 +564,10 @@ class EventForm(ModelForm):
         elif not use_proposals:
             cleaned_data['limit_proposal_date'] = datetime.date.today()
         if cleaned_data.get('is_paid'):
-            self.validate_paid_event(cleaned_data)
+            self.validate_paid_event()
         return cleaned_data
 
-    def validate_paid_event(self, cleaned_data):
-        ticket_price = cleaned_data.get('ticket_price')
-        if not ticket_price or ticket_price <= 0:
-            self.add_error('ticket_price', _('A paid event needs a ticket price greater than 0'))
+    def validate_paid_event(self):
         # The linked Mercado Pago account (mp_link_seller) receives the payments of every event
         if not SellerAccount.objects.exists():
             self.add_error(

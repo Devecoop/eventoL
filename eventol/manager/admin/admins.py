@@ -22,7 +22,7 @@ from manager.admin.filters import (
     UserFromEventUserSetFilter,
 )
 from manager.admin.generics import EventoLAdmin, EventoLEventUserAdmin, ThemeAdmin
-from manager.admin.inlines import EventDateAdminInline, EventTagInline
+from manager.admin.inlines import EventDateAdminInline, EventTagInline, TicketTypeAdminInline
 from manager.admin.resources import (
     ActivityResource,
     AttendeeAttendanceDateResource,
@@ -98,10 +98,12 @@ class AttendeeAdmin(ExportMixin, EventoLAdmin):
         'email_confirmed',
         'registration_date',
         'ticket',
+        'ticket_type',
         'get_ticket_cancelled',
     )
     list_filter = (
         EventFilter,
+        'ticket_type',
         'ticket__cancelled',
         'is_installing',
         'email_confirmed',
@@ -244,14 +246,14 @@ class ContactTypeAdmin(admin.ModelAdmin):
 
 
 class EventAdmin(ImageCroppingMixin, EventoLAdmin):
-    inlines = [EventDateAdminInline, EventTagInline]
+    inlines = [EventDateAdminInline, TicketTypeAdminInline, EventTagInline]
     exclude = ['tags']
     list_display = (
         'name',
         'url',
         'registration_closed',
         'is_paid',
-        'ticket_price',
+        'ticket_quota',
         'schedule_confirmed',
         'use_installations',
         'use_installers',

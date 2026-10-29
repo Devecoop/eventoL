@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from manager.models import Attendee, Event
+from manager.models import Attendee, Event, TicketType
 from payments import crypto
 
 
@@ -110,16 +110,9 @@ class Order(models.Model):
     buyer_email = models.EmailField(_('Buyer email'))
     buyer_phone = models.CharField(_('Buyer phone'), max_length=50)
     quantity = models.PositiveIntegerField(_('Quantity'))
-    unit_price = models.DecimalField(_('Unit price'), max_digits=12, decimal_places=2)
     total = models.DecimalField(_('Total'), max_digits=12, decimal_places=2)
     marketplace_fee = models.DecimalField(_('Marketplace fee'), max_digits=12, decimal_places=2)
     currency = models.CharField(_('Currency'), max_length=3, default='ARS')
-    quota = models.PositiveIntegerField(
-        _('Event quota'),
-        blank=True,
-        null=True,
-        help_text=_('Quota of the event when the order was created'),
-    )
     reserved_until = models.DateTimeField(_('Reserved until'))
     preference_id = models.CharField(_('Preference id'), max_length=100, blank=True)
     init_point = models.URLField(_('Checkout URL'), max_length=500, blank=True)
@@ -152,6 +145,15 @@ class OrderItem(models.Model):
     last_name = models.CharField(_('Last Name'), max_length=200)
     dni = models.CharField(_('DNI'), max_length=20)
     email = models.EmailField(_('Email'), blank=True)
+    # Nullable only for the orders created before the ticket types
+    ticket_type = models.ForeignKey(
+        TicketType,
+        verbose_name=_('Ticket type'),
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
+    unit_price = models.DecimalField(_('Unit price'), max_digits=12, decimal_places=2)
     attendee = models.ForeignKey(
         Attendee, verbose_name=_('Attendee'), blank=True, null=True, on_delete=models.SET_NULL
     )
