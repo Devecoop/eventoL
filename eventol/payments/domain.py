@@ -11,13 +11,14 @@ Rules:
 
 import logging
 import uuid
+from collections import Counter
 from dataclasses import dataclass
 from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -55,6 +56,7 @@ class AttendeeData:
     last_name: str
     dni: str
     email: str = ''
+    ticket_type: object = None
 
 
 def calculate_marketplace_fee(total):
@@ -63,44 +65,98 @@ def calculate_marketplace_fee(total):
     )
 
 
-def used_quota(event, now=None, exclude_order=None):
-    """Tickets of the event that are paid or reserved by a pending order."""
+@dataclass
+class Availability:
+    """Remaining tickets by ticket type and of the whole event (``None`` = no limit)."""
+
+    by_type: dict
+    event: int | None
+
+    def for_type(self, ticket_type_id):
+        """Maximum tickets of one type that can still be sold."""
+        limits = [self.by_type.get(ticket_type_id), self.event]
+        limits = [limit for limit in limits if limit is not None]
+        return min(limits) if limits else None
+
+    def fits(self, counts):
+        """``counts`` maps a ticket type id to the number of tickets wanted."""
+        for ticket_type_id, quantity in counts.items():
+            remaining = self.by_type.get(ticket_type_id)
+            if remaining is not None and quantity > remaining:
+                return False
+        return self.event is None or sum(counts.values()) <= self.event
+
+    @property
+    def sold_out(self):
+        if self.event == 0:
+            return True
+        return bool(self.by_type) and all(remaining == 0 for remaining in self.by_type.values())
+
+
+def _items_holding_quota(event, now=None, exclude_order=None):
+    """Items of the event that are paid or reserved by a pending order."""
     orders = Order.objects.holding_quota(now).filter(event=event)
     if exclude_order is not None:
         orders = orders.exclude(pk=exclude_order.pk)
-    return OrderItem.objects.filter(order__in=orders).aggregate(total=Count('id'))['total']
+    return OrderItem.objects.filter(order__in=orders)
 
 
-def available_quota(event, quota, now=None, exclude_order=None):
-    """Remaining tickets, or None when the event has no quota."""
-    if quota is None:
-        return None
-    return max(quota - used_quota(event, now, exclude_order), 0)
+def availability(event, now=None, exclude_order=None):
+    items = _items_holding_quota(event, now, exclude_order)
+    used_by_type = {
+        row['ticket_type']: row['total']
+        for row in items.values('ticket_type').annotate(total=Count('id'))
+    }
+    by_type = {
+        ticket_type.pk: (
+            None
+            if ticket_type.quota is None
+            else max(ticket_type.quota - used_by_type.get(ticket_type.pk, 0), 0)
+        )
+        for ticket_type in event.ticket_types.all()
+    }
+    event_remaining = None
+    if event.ticket_quota is not None:
+        event_remaining = max(event.ticket_quota - items.count(), 0)
+    return Availability(by_type=by_type, event=event_remaining)
 
 
-def create_order(event, buyer, attendees, unit_price, quota=None):  # noqa: PLR0913
+def ticket_type_has_sales(ticket_type, now=None):
+    """A ticket type with paid, refunded or reserved tickets cannot change its price."""
+    return (
+        OrderItem.objects.filter(ticket_type=ticket_type)
+        .filter(
+            Q(order__in=Order.objects.holding_quota(now)) | Q(order__status=Order.Status.REFUNDED)
+        )
+        .exists()
+    )
+
+
+def create_order(event, buyer, attendees):
     """Create a pending order, reserve its tickets and create the Mercado Pago preference.
 
-    ``unit_price`` and ``quota`` are given by the caller (``Event.ticket_price`` and
-    ``Event.ticket_quota`` in the purchase view).
+    Each attendee has a ``ticket_type`` of the event: its price and quota are read from it.
     Raises QuotaExceededError, InvalidOrderError, SellerAccountNotConfiguredError or
     services.MercadoPagoError.
     """
-    unit_price = Decimal(unit_price).quantize(CENTS)
     if not attendees:
         raise InvalidOrderError('An order needs at least one attendee')
-    if unit_price <= 0:
-        raise InvalidOrderError('The ticket price must be greater than zero')
+    ticket_types = {ticket_type.pk: ticket_type for ticket_type in event.ticket_types.all()}
+    for attendee in attendees:
+        if getattr(attendee.ticket_type, 'pk', None) not in ticket_types:
+            raise InvalidOrderError('The ticket type does not belong to the event')
+        if ticket_types[attendee.ticket_type.pk].price <= 0:
+            raise InvalidOrderError('The ticket price must be greater than zero')
     seller = SellerAccount.current()
-    total = unit_price * len(attendees)
+    counts = Counter(attendee.ticket_type.pk for attendee in attendees)
+    total = sum(ticket_types[attendee.ticket_type.pk].price for attendee in attendees)
 
     with transaction.atomic():
         # Lock the event row so two buyers cannot take the last tickets at the same time.
         # _base_manager avoids the annotations of EventManager (GROUP BY cannot be locked).
         Event._base_manager.select_for_update().filter(pk=event.pk).first()  # pylint: disable=protected-access
-        available = available_quota(event, quota)
-        if available is not None and available < len(attendees):
-            raise QuotaExceededError(f'Only {available} tickets left')
+        if not availability(event).fits(counts):
+            raise QuotaExceededError('There are not enough tickets left')
         order = Order.objects.create(
             event=event,
             seller=seller,
@@ -109,10 +165,8 @@ def create_order(event, buyer, attendees, unit_price, quota=None):  # noqa: PLR0
             buyer_email=buyer.email,
             buyer_phone=buyer.phone,
             quantity=len(attendees),
-            unit_price=unit_price,
             total=total,
             marketplace_fee=calculate_marketplace_fee(total),
-            quota=quota,
             reserved_until=timezone.now() + timedelta(minutes=settings.MP_RESERVATION_MINUTES),
         )
         OrderItem.objects.bulk_create(
@@ -122,6 +176,8 @@ def create_order(event, buyer, attendees, unit_price, quota=None):  # noqa: PLR0
                 last_name=attendee.last_name,
                 dni=attendee.dni,
                 email=attendee.email,
+                ticket_type=ticket_types[attendee.ticket_type.pk],
+                unit_price=ticket_types[attendee.ticket_type.pk].price,
             )
             for attendee in attendees
         )
@@ -230,8 +286,8 @@ def _approve(order, payment):
                 payment.mp_payment_id,
             )
         return
-    available = available_quota(order.event, order.quota, exclude_order=order)
-    if available is not None and available < order.quantity:
+    counts = Counter(order.items.values_list('ticket_type', flat=True))
+    if not availability(order.event, exclude_order=order).fits(counts):
         order.status = Order.Status.APPROVED_OVER_QUOTA
         logger.error(
             'Order %s was paid after its reservation expired and the quota is full', order.id

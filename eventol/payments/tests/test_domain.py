@@ -6,6 +6,7 @@ from unittest import mock
 import pytest
 from django.utils import timezone
 
+from manager.models import TicketType
 from payments import domain
 from payments.models import Order, Payment, SellerAccountNotConfiguredError
 from payments.services import MercadoPagoError
@@ -18,16 +19,27 @@ pytestmark = pytest.mark.django_db
 BUYER = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
 
 
-def attendees(quantity):
+def attendees(quantity, ticket_type, first=0):
     return [
-        domain.AttendeeData(first_name='Ana', last_name=f'Garcia {number}', dni=f'3000000{number}')
-        for number in range(quantity)
+        domain.AttendeeData(
+            first_name='Ana',
+            last_name=f'Garcia {number}',
+            dni=f'300000{number:02}',
+            ticket_type=ticket_type,
+        )
+        for number in range(first, first + quantity)
     ]
 
 
+def limit_general(general, quota):
+    general.quota = quota
+    general.save()
+    return general
+
+
 @pytest.fixture
-def order(event, seller, preference):
-    return domain.create_order(event, BUYER, attendees(2), '1000', quota=10)
+def order(event, seller, preference, general):
+    return domain.create_order(event, BUYER, attendees(2, general))
 
 
 @pytest.fixture
@@ -63,37 +75,105 @@ def test_create_order(order, seller, preference):
     preference.assert_called_once_with(order, 'seller-access-token')
 
 
-def test_create_order_requires_a_seller(event, preference):
+def test_create_order_requires_a_seller(event, preference, general):
     with pytest.raises(SellerAccountNotConfiguredError):
-        domain.create_order(event, BUYER, attendees(1), '1000')
+        domain.create_order(event, BUYER, attendees(1, general))
 
 
-@pytest.mark.parametrize(('price', 'quantity'), [('0', 1), ('1000', 0)])
-def test_create_order_validates_price_and_attendees(event, seller, preference, price, quantity):
+def test_create_order_needs_attendees(event, seller, preference):
     with pytest.raises(domain.InvalidOrderError):
-        domain.create_order(event, BUYER, attendees(quantity), price)
+        domain.create_order(event, BUYER, [])
 
 
-def test_pending_orders_reserve_quota(event, seller, preference):
-    domain.create_order(event, BUYER, attendees(2), '1000', quota=3)
+def test_create_order_rejects_a_ticket_type_of_another_event(event, seller, preference):
+    other = event.__class__.objects.create(
+        name='Other',
+        event_slug='other',
+        email='a@b.test',
+        abstract='x',
+        limit_proposal_date=timezone.localdate(),
+    )
+    foreign = TicketType.objects.create(event=other, name='General', price='10')
+    with pytest.raises(domain.InvalidOrderError):
+        domain.create_order(event, BUYER, attendees(1, foreign))
+
+
+def test_order_with_several_ticket_types(event, seller, preference, general, vip):
+    order = domain.create_order(event, BUYER, attendees(2, general) + attendees(1, vip, first=2))
+    assert order.quantity == 3
+    assert order.total == Decimal('5000.00')
+    assert sorted(order.items.values_list('ticket_type__name', 'unit_price')) == [
+        ('General', Decimal('1000.00')),
+        ('General', Decimal('1000.00')),
+        ('VIP', Decimal('3000.00')),
+    ]
+
+
+def test_the_price_is_read_from_the_ticket_type(event, seller, preference, general):
+    general.price = Decimal('1')  # stale object given by the caller
+    order = domain.create_order(event, BUYER, attendees(1, general))
+    assert order.total == Decimal('1000.00')
+
+
+def test_pending_orders_reserve_quota(event, seller, preference, general):
+    limit_general(general, 3)
+    domain.create_order(event, BUYER, attendees(2, general))
     with pytest.raises(domain.QuotaExceededError):
-        domain.create_order(event, BUYER, attendees(2), '1000', quota=3)
+        domain.create_order(event, BUYER, attendees(2, general, first=2))
 
 
-def test_expired_reservations_free_the_quota(event, seller, preference):
-    first = domain.create_order(event, BUYER, attendees(2), '1000', quota=3)
+def test_quota_of_a_type_does_not_limit_the_others(event, seller, preference, general, vip):
+    domain.create_order(event, BUYER, attendees(2, vip))
+    with pytest.raises(domain.QuotaExceededError):
+        domain.create_order(event, BUYER, attendees(1, vip, first=2))
+    domain.create_order(event, BUYER, attendees(5, general, first=3))
+    availability = domain.availability(event)
+    assert availability.for_type(vip.pk) == 0
+    assert availability.for_type(general.pk) is None
+    assert not availability.sold_out
+
+
+def test_event_capacity_limits_every_type(event, seller, preference, general, vip):
+    event.ticket_quota = 3
+    event.save()
+    domain.create_order(event, BUYER, attendees(2, general))
+    availability = domain.availability(event)
+    assert availability.for_type(general.pk) == 1
+    assert availability.for_type(vip.pk) == 1
+    with pytest.raises(domain.QuotaExceededError):
+        domain.create_order(
+            event, BUYER, attendees(1, general, first=2) + attendees(1, vip, first=3)
+        )
+    domain.create_order(event, BUYER, attendees(1, vip, first=4))
+    assert domain.availability(event).sold_out
+
+
+def test_expired_reservations_free_the_quota(event, seller, preference, general):
+    limit_general(general, 3)
+    first = domain.create_order(event, BUYER, attendees(2, general))
     Order.objects.filter(pk=first.pk).update(reserved_until=timezone.now() - timedelta(minutes=1))
-    domain.create_order(event, BUYER, attendees(1), '1000', quota=3)
-    assert domain.available_quota(event, 3) == 2
+    domain.create_order(event, BUYER, attendees(1, general, first=2))
+    assert domain.availability(event).for_type(general.pk) == 2
 
 
-def test_mercado_pago_error_releases_the_reservation(event, seller):
+def test_mercado_pago_error_releases_the_reservation(event, seller, general):
+    limit_general(general, 2)
     with (
         mock.patch('payments.services.create_preference', side_effect=MercadoPagoError('down')),
         pytest.raises(MercadoPagoError),
     ):
-        domain.create_order(event, BUYER, attendees(2), '1000', quota=2)
-    assert domain.available_quota(event, 2) == 2
+        domain.create_order(event, BUYER, attendees(2, general))
+    assert domain.availability(event).for_type(general.pk) == 2
+
+
+def test_ticket_type_has_sales(event, seller, preference, general, vip):
+    order = domain.create_order(event, BUYER, attendees(1, general))
+    assert domain.ticket_type_has_sales(general)
+    assert not domain.ticket_type_has_sales(vip)
+    Order.objects.filter(pk=order.pk).update(reserved_until=timezone.now() - timedelta(minutes=1))
+    assert not domain.ticket_type_has_sales(general)
+    Order.objects.filter(pk=order.pk).update(status=Order.Status.REFUNDED)
+    assert domain.ticket_type_has_sales(general)
 
 
 def test_approved_payment_approves_the_order(
@@ -141,11 +221,12 @@ def test_rejected_attempt_then_approved_payment(order):
 
 
 def test_late_payment_over_quota(
-    event, seller, preference, paid_receiver, django_capture_on_commit_callbacks
+    event, seller, preference, general, paid_receiver, django_capture_on_commit_callbacks
 ):
-    late = domain.create_order(event, BUYER, attendees(2), '1000', quota=2)
+    limit_general(general, 2)
+    late = domain.create_order(event, BUYER, attendees(2, general))
     Order.objects.filter(pk=late.pk).update(reserved_until=timezone.now() - timedelta(minutes=1))
-    other = domain.create_order(event, BUYER, attendees(2), '1000', quota=2)
+    other = domain.create_order(event, BUYER, attendees(2, general, first=2))
     with django_capture_on_commit_callbacks(execute=True):
         domain.apply_payment(mp_payment(other, payment_id='1'))
         domain.apply_payment(mp_payment(late, payment_id='2'))
