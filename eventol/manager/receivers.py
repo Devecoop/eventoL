@@ -25,6 +25,7 @@ def _create_attendee(order, item):
                 last_name=item.last_name,
                 dni=item.dni,
                 email=item.ticket_email,
+                ticket_type=item.ticket_type,
                 email_confirmed=True,
                 registration_date=timezone.now(),
                 ticket=ticket,

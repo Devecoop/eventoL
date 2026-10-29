@@ -1,7 +1,6 @@
 # pylint: disable=redefined-outer-name,unused-argument
 import os
 from datetime import timedelta
-from decimal import Decimal
 
 import pytest
 from django.conf import settings as django_settings
@@ -13,6 +12,7 @@ from django.utils import timezone
 
 from manager.forms import AttendeeRegistrationForm, EventForm
 from manager.models import Attendee, EventDate
+from manager.views import generate_ticket
 from payments import domain
 from payments.models import Order
 
@@ -29,16 +29,22 @@ def ticket_settings(settings):
 
 
 @pytest.fixture
-def order(event, seller, preference, ticket_settings):
+def order(event, seller, preference, ticket_settings, general, vip):
     EventDate.objects.create(event=event, date=timezone.localdate() + timedelta(days=10))
     buyer = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
     people = [
-        domain.AttendeeData(first_name='Ana', last_name='Garcia', dni='30000000'),
         domain.AttendeeData(
-            first_name='Beto', last_name='Garcia', dni='30000001', email='beto@example.com'
+            first_name='Ana', last_name='Garcia', dni='30000000', ticket_type=general
+        ),
+        domain.AttendeeData(
+            first_name='Beto',
+            last_name='Garcia',
+            dni='30000001',
+            email='beto@example.com',
+            ticket_type=vip,
         ),
     ]
-    return domain.create_order(event, buyer, people, '1000')
+    return domain.create_order(event, buyer, people)
 
 
 def pay(order, django_capture_on_commit_callbacks, status='approved'):
@@ -51,6 +57,7 @@ def test_paid_order_issues_one_ticket_by_attendee(order, django_capture_on_commi
 
     attendees = Attendee.objects.filter(event=order.event).order_by('dni')
     assert [attendee.dni for attendee in attendees] == ['30000000', '30000001']
+    assert [attendee.ticket_type.name for attendee in attendees] == ['General', 'VIP']
     assert [attendee.email for attendee in attendees] == ['ana@example.com', 'beto@example.com']
     assert all(attendee.email_confirmed and attendee.ticket for attendee in attendees)
     assert all(attendee.ticket.sent for attendee in attendees)
@@ -66,6 +73,7 @@ def test_buyer_receives_every_ticket_and_attendees_their_own(
     assert set(by_recipient) == {'ana@example.com', 'beto@example.com'}
     assert len(by_recipient['ana@example.com'].attachments) == 2
     assert len(by_recipient['beto@example.com'].attachments) == 1
+    assert '- Beto Garcia (30000001) - VIP' in by_recipient['ana@example.com'].body
 
 
 def test_buyer_tickets_are_queued_in_celery_when_enabled(
@@ -127,7 +135,29 @@ def test_cancelled_ticket_does_not_allow_entry(
     assert not attendee.attended
 
 
-def test_paid_event_needs_price_and_seller(event):
+def test_ticket_shows_its_type(order, django_capture_on_commit_callbacks):
+    pay(order, django_capture_on_commit_callbacks)
+    attendee = Attendee.objects.get(dni='30000001')
+    assert b'>VIP<' in generate_ticket(attendee)
+
+
+def test_scanner_shows_the_ticket_type(admin_client, order, django_capture_on_commit_callbacks):
+    pay(order, django_capture_on_commit_callbacks)
+    attendee = Attendee.objects.get(dni='30000001')
+    event = order.event
+    EventDate.objects.create(event=event, date=timezone.localdate())
+
+    response = admin_client.get(
+        reverse('attendance_by_autoreadqr', args=[event.event_slug]),
+        {'event_registration_code': event.registration_code, 'ticket': attendee.ticket.code},
+        follow=True,
+    )
+
+    assert str(list(response.context['messages'])[0]).endswith('(VIP)')
+    assert attendee.attended
+
+
+def test_paid_event_needs_a_seller(event):
     data = {
         'name': event.name,
         'event_slug': 'paid-event',
@@ -138,11 +168,10 @@ def test_paid_event_needs_price_and_seller(event):
     }
     form = EventForm(data)
     assert not form.is_valid()
-    assert 'ticket_price' in form.errors
     assert 'is_paid' in form.errors
 
 
-def test_paid_event_with_price_and_seller_is_valid(event, seller):
+def test_paid_event_with_seller_and_without_ticket_types_is_valid(event, seller):
     data = {
         'name': event.name,
         'event_slug': 'paid-event',
@@ -150,7 +179,6 @@ def test_paid_event_with_price_and_seller_is_valid(event, seller):
         'email': event.email,
         'abstract': event.abstract,
         'is_paid': True,
-        'ticket_price': Decimal('1000'),
     }
     assert EventForm(data).is_valid()
 

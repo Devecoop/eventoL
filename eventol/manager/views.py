@@ -111,6 +111,14 @@ from manager.utils.report import count_by
 logger = logging.getLogger('eventol')
 
 
+def with_ticket_type(message, attendee):
+    """Add the ticket type to an attendance message, so the staff sees it when scanning."""
+    ticket_type = getattr(attendee, 'ticket_type', None)
+    if ticket_type is None:
+        return message
+    return f'{message} ({ticket_type.name})'
+
+
 # Auxiliary functions
 def update_event_info(event_slug, render_dict=None, event=None):
     event = get_object_or_404(Event, event_slug=event_slug)
@@ -135,7 +143,10 @@ def generate_ticket(user):
     ticket_template.set_text('event_place_name', '')
     ticket_template.set_text('event_place_address', '')
 
-    ticket_template.set_text('ticket_type', str(_('General Ticket')))
+    ticket_type = ticket_data.get('ticket_type')
+    ticket_template.set_text(
+        'ticket_type', ticket_type.name[:30] if ticket_type else str(_('General Ticket'))
+    )
     qr_code = pyqrcode.create(str(ticket_data['ticket']))
     code = io.BytesIO()
     qr_code.png(code, scale=7, quiet_zone=0)
@@ -297,7 +308,10 @@ def manage_attendance(request, event_slug):
                     return redirect(reverse('manage_attendance', args=[event_slug]))
                 if attendee.attended_today:
                     messages.success(
-                        request, _('The attendee has already been registered correctly.')
+                        request,
+                        with_ticket_type(
+                            _('The attendee has already been registered correctly.'), attendee
+                        ),
                     )
                 else:
                     attendance_date = AttendeeAttendanceDate()
@@ -305,7 +319,11 @@ def manage_attendance(request, event_slug):
                     attendance_date.mode = '3'
                     attendance_date.save()
                     messages.success(
-                        request, _('The attendee has been successfully registered. Happy Hacking!')
+                        request,
+                        with_ticket_type(
+                            _('The attendee has been successfully registered. Happy Hacking!'),
+                            attendee,
+                        ),
                     )
                     return redirect(reverse('manage_attendance', args=[event_slug]))
         if collaborator_form.is_valid():
@@ -352,7 +370,12 @@ def attendance_by_ticket(request, event_slug, ticket_code):
         if attendee.ticket is not None and attendee.ticket.cancelled:
             messages.error(request, _(CANCELLED_TICKET_MESSAGE))
         elif attendee.attended_today:
-            messages.success(request, _('The attendee has already been registered correctly.'))
+            messages.success(
+                request,
+                with_ticket_type(
+                    _('The attendee has already been registered correctly.'), attendee
+                ),
+            )
         else:
             if hasattr(attendee, 'user'):
                 attendance_date = EventUserAttendanceDate()
@@ -363,7 +386,10 @@ def attendance_by_ticket(request, event_slug, ticket_code):
             attendance_date.mode = '2'
             attendance_date.save()
             messages.success(
-                request, _('The attendee has been successfully registered. Happy Hacking!')
+                request,
+                with_ticket_type(
+                    _('The attendee has been successfully registered. Happy Hacking!'), attendee
+                ),
             )
     else:
         messages.error(request, _("The user isn't registered for this event."))
@@ -698,11 +724,19 @@ def attendance_by_autoreadqr(request, event_slug):
             if attendee.ticket.cancelled:
                 messages.error(request, _(CANCELLED_TICKET_MESSAGE))
             elif attendance.exists():
-                messages.info(request, _('You are already registered and present! Go have fun'))
+                messages.info(
+                    request,
+                    with_ticket_type(
+                        _('You are already registered and present! Go have fun'), attendee
+                    ),
+                )
             else:
                 AttendeeAttendanceDate.objects.create(attendee=attendee, mode='2')
                 messages.success(
-                    request, _('You are now marked as present in the event, have fun!')
+                    request,
+                    with_ticket_type(
+                        _('You are now marked as present in the event, have fun!'), attendee
+                    ),
                 )
         else:
             messages.error(request, _('The ticket code is not valid for this event'))
