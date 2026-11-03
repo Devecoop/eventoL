@@ -1,4 +1,4 @@
-"""Issue and cancel the tickets of the orders paid with Mercado Pago (payments app)."""
+"""Issue and cancel the tickets of the orders paid with payment apps."""
 
 import logging
 
