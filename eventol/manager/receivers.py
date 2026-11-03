@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from manager.models import Attendee, Ticket
 from manager.utils import email as utils_email
-from manager.views import generate_ticket, send_event_ticket
+from manager.views import send_event_ticket
 from payments.models import Order
 from payments.signals import order_paid, order_refunded
 
@@ -45,11 +45,13 @@ def _create_attendee(order, item):
 
 def _send_tickets(order, attendees):
     try:
-        tickets = [(attendee.ticket.code, generate_ticket(attendee)) for attendee in attendees]
-        utils_email.send_order_tickets_email(
-            order.event.name, order.buyer_name, order.buyer_email, tickets
+        utils_email.send_email(
+            utils_email.send_order_tickets_email,
+            order.event.name,
+            order.buyer_name,
+            order.buyer_email,
+            [attendee.pk for attendee in attendees],
         )
-        Ticket.objects.filter(attendee__in=attendees).update(sent=True)
     except Exception:  # pylint: disable=broad-except
         # The order is paid and the attendees exist: the tickets can be sent again later
         logger.exception('Could not send the tickets of order %s', order.id)

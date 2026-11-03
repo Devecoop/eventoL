@@ -151,25 +151,33 @@ def send_ticket_email(ticket_data, ticket_svg):
     email.send(fail_silently=settings.EMAIL_FAIL_SILENTY)
 
 
-def send_order_tickets_email(event_name, buyer_name, email_to, tickets):
+@shared_task
+def send_order_tickets_email(event_name, buyer_name, email_to, attendee_ids):
     """Send every ticket of a purchase to the buyer in one e-mail.
 
-    ``tickets`` is a list of (ticket_code, ticket_svg). Not a shared_task for the same reason as
-    send_ticket_email (the SVG images).
+    Receives the attendee ids instead of the SVG images (see send_ticket_email) and generates the
+    tickets here, so it can run in celery.
     """
+    # manager.views imports this module
+    # pylint: disable=import-outside-toplevel
+    from manager.models import Attendee, Ticket  # noqa: PLC0415
+    from manager.views import generate_ticket  # noqa: PLC0415
+
+    attendees = Attendee.objects.filter(pk__in=attendee_ids).select_related('ticket')
     email = EmailMultiAlternatives()
     email.subject = get_ticket_subject(event_name)
-    body_txt, body_html = get_order_tickets_body(buyer_name, event_name, len(tickets))
+    body_txt, body_html = get_order_tickets_body(buyer_name, event_name, len(attendees))
     email.body = body_txt
     email.attach_alternative(body_html, 'text/html')
     email.to = [email_to]
-    for ticket_code, ticket_svg in tickets:
+    for attendee in attendees:
         email.attach(
-            f'Ticket-{ticket_code}.pdf',
-            cairosvg.svg2pdf(bytestring=ticket_svg),
+            f'Ticket-{attendee.ticket.code}.pdf',
+            cairosvg.svg2pdf(bytestring=generate_ticket(attendee)),
             'application/pdf',
         )
     email.send(fail_silently=settings.EMAIL_FAIL_SILENTY)
+    Ticket.objects.filter(attendee__in=attendees).update(sent=True)
 
 
 @shared_task

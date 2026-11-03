@@ -68,6 +68,25 @@ def test_buyer_receives_every_ticket_and_attendees_their_own(
     assert len(by_recipient['beto@example.com'].attachments) == 1
 
 
+def test_buyer_tickets_are_queued_in_celery_when_enabled(
+    order, settings, monkeypatch, django_capture_on_commit_callbacks
+):
+    settings.CELERY_ENABLED = True
+    queued = []
+    monkeypatch.setattr(
+        'manager.utils.email.send_order_tickets_email.delay',
+        lambda *args: queued.append(args),
+    )
+
+    pay(order, django_capture_on_commit_callbacks)
+
+    attendee_ids = sorted(Attendee.objects.filter(event=order.event).values_list('pk', flat=True))
+    assert len(queued) == 1
+    event_name, buyer_name, email_to, queued_ids = queued[0]
+    assert (event_name, buyer_name, email_to) == (order.event.name, 'Ana Pez', 'ana@example.com')
+    assert sorted(queued_ids) == attendee_ids
+
+
 def test_ticket_is_not_issued_twice_for_a_dni(order, django_capture_on_commit_callbacks):
     # Another purchase took the DNI after this order was created
     Attendee.objects.create(event=order.event, email='other@example.com', dni='30000001')
