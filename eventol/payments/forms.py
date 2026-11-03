@@ -5,8 +5,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from manager.models import Attendee
-
-MAX_TICKETS_PER_ORDER = 10
+from payments.constants import MAX_TICKETS_PER_ORDER
 
 
 class TicketQuantityForm(forms.Form):
