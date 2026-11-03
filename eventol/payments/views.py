@@ -28,13 +28,15 @@ def _parse_notification(request):
     if not isinstance(body, dict):
         body = {}
     data = body.get('data') if isinstance(body.get('data'), dict) else {}
+    topic = body.get('type') or request.GET.get('type') or request.GET.get('topic') or ''
+    action = body.get('action') or ''
+    resource_id = data.get('id') or request.GET.get('data.id') or request.GET.get('id') or ''
+    mp_user_id = body.get('user_id') or ''
     return {
-        'topic': str(body.get('type') or request.GET.get('type') or request.GET.get('topic') or ''),
-        'action': str(body.get('action') or ''),
-        'resource_id': str(
-            data.get('id') or request.GET.get('data.id') or request.GET.get('id') or ''
-        ),
-        'mp_user_id': str(body.get('user_id') or ''),
+        'topic': str(topic),
+        'action': str(action),
+        'resource_id': str(resource_id),
+        'mp_user_id': str(mp_user_id),
         'payload': body,
     }
 
