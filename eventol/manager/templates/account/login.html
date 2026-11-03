@@ -2,14 +2,14 @@
 {% load i18n %}
 {% load account socialaccount %}
 
-{% block page-header %}{% trans "Login" %}{% endblock %}
+{% block page-header %}<h1 class="page-title">{% trans "Login" %}</h1>{% endblock %}
 {% block page-name %}{% trans "Login" %}{% endblock %}
 {% block navbar-menu %}{% endblock %}
 
 {% block pre-form %}
     <p>{% blocktrans with site.name as site_name %}Please sign in with one
         of your existing third party accounts. Or,
-        <a href="{{ signup_url }}" style="font-size:18px; font-weight: 500;">sign up</a>
+        <a href="{{ signup_url }}" class="font-weight-bold">sign up</a>
         for a {{ site_name }} account and sign in below:{% endblocktrans %}</p>
 
     {% get_providers as socialaccount_providers %}
@@ -18,7 +18,7 @@
 
         <div class="row">
             <div class="col-sm-6 offset-sm-3 col-12">
-                <h3 style="text-align: center;">{% trans 'or' %}</h3>
+                <p class="form-separator">{% trans 'or' %}</p>
                 <hr style="border-top: 2px solid #B6B6B6">
             </div>
         </div>

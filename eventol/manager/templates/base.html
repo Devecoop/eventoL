@@ -1,9 +1,9 @@
 {% extends "base-main.html" %}
 {% load i18n %}
 {% block main-content %}
-    <div class="{% block content-size %}col-md-10 offset-md-1{% endblock %}">
+    <div class="page-content {% block content-size %}col-12{% endblock %}">
       {% block content-header %}
-          <h2>{% block page-header %}{% endblock %}</h2>
+          <header class="page-header">{% block page-header %}{% endblock %}</header>
       {% endblock %}
       {% block content %}{% endblock %}
     </div>

@@ -1,0 +1,40 @@
+{% load i18n home %}
+<div class="navigation">
+  <nav>
+    <ul>
+      <button type="button" role="link" data-search-focus><li>{% home_trans 'Search' %}</li></button>
+      <a href="http://eventol.github.io/eventoL/#/"><li>{% home_trans 'Documentation' %}</li></a>
+      <a href="#featured"><li>{% home_trans 'Featured' %}</li></a>
+      <a href="#recent"><li>{% home_trans 'Recent' %}</li></a>
+      <a href="{% url 'generic_report' %}"><li>{% home_trans 'Generic report' %}</li></a>
+      {% get_available_languages as languages %}
+      {% if languages %}
+      <div class="languages-dropdown">
+        <button class="dropbtn" type="button">{% home_trans 'Languages' %}<i class="fa fa-caret-down"></i></button>
+        <div class="dropdown-content">
+          {% for code, name in languages %}
+          <a href="#lang" data-language="{{ code }}">{{ name }}</a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% if user.is_authenticated %}
+<div class="user-profile">
+  <a href="{% url 'user_profile' %}">
+    <div class="user">
+      <div class="name">{{ user.first_name }} {{ user.last_name }}</div>
+      <div class="image"><div class="fa fa-user fa-2x"></div></div>
+    </div>
+  </a>
+</div>
+{% else %}
+<div class="sign-in">
+  <ul>
+    <li><a href="{% url 'account_login' %}">{% home_trans 'Sign In' %}</a></li>
+    <li><a href="{% url 'account_signup' %}">{% home_trans 'Sign Up' %}</a></li>
+  </ul>
+</div>
+{% endif %}

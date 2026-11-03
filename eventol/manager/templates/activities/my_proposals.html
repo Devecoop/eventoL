@@ -4,15 +4,15 @@
 {% load filters %}
 {% load cropping thumbnail %}
 {% block page-header %}
-    <div class="row">
-        <h1>
+    <div class="page-heading-row">
+        <h1 class="page-title">
           {% trans "My Proposals" %}
         </h1>
     </div>
 {% endblock %}
 {% block content %}
     {% if accepted_activities or proposed_activities or rejected_activities %}
-        <h3 class='row'>{% trans "Confirmed" %}</h3>
+        <h2 class="section-title">{% trans "Confirmed" %}</h2>
         <br>
 
         <div class="row">
@@ -21,7 +21,7 @@
                     {% for talk in accepted_activities %}
                         <div>
                             <div class="card-header">
-                                <h5 class="card-title" style="display: contents;"">
+                                <h3 class="card-title">
                                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion"
                                        href="#talk-{{ forloop.counter }}">
                                         {{ talk.title }} - {{ talk.schedule }}
@@ -33,7 +33,7 @@
                                             {% trans "Confirmed" %}
                                         </span>
                                     {% endif %}
-                                </h5>
+                                </h3>
                             </div>
                             <div id="talk-{{ forloop.counter }}" class="collapse">
                                 <div class="card card-body">
@@ -73,18 +73,18 @@
                 {% else %}
                     <div>
                         <div class="card-header">
-                            <h5 class="card-title" style="display: contents;"">
+                            <h3 class="card-title">
                                 <div class="accordion-toggle">
                                     {% trans "There isn't any proposed activity yet." %}
                                 </div>
-                            </h5>
+                            </h3>
                         </div>
                     </div>
                 {% endif %}
                 </div>
             </div>
 
-            <h3 class='row'>{% trans "Proposed" %}</h3>
+            <h2 class="section-title">{% trans "Proposed" %}</h2>
             <br>
 
             <div class="row">
@@ -93,7 +93,7 @@
                         {% for proposal in proposed_activities %}
                             <div>
                                 <div class="card-header">
-                                    <h5 class="card-title" style="display: contents;"">
+                                    <h3 class="card-title">
                                         <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion"
                                            href="#proposal-{{ forloop.counter }}">
                                             {{ proposal.title }}
@@ -104,7 +104,7 @@
                                                 {% trans "Not Confirmed" %}
                                             </span>
                                         {% endif %}
-                                    </h5>
+                                    </h3>
                                 </div>
                                 <div id="proposal-{{ forloop.counter }}" class="collapse">
                                     <div class="card card-body">
@@ -139,18 +139,18 @@
                     {% else %}
                         <div>
                             <div class="card-header">
-                                <h5 class="card-title" style="display: contents;"">
+                                <h3 class="card-title">
                                     <div class="accordion-toggle">
                                         {% trans "There isn't any proposed activity yet." %}
                                     </div>
-                                </h5>
+                                </h3>
                             </div>
                         </div>
                     {% endif %}
                 </div>
             </div>
 
-            <h3 class='row'>{% trans "Rejected" %}</h3>
+            <h2 class="section-title">{% trans "Rejected" %}</h2>
             <br>
 
             <div class="row">
@@ -159,7 +159,7 @@
                         {% for activity in rejected_activities %}
                             <div>
                                 <div class="card-header">
-                                    <h5 class="card-title" style="display: contents;"">
+                                    <h3 class="card-title">
                                         <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion"
                                            href="#activity-{{ forloop.counter }}">
                                             {{ activity.title }}
@@ -171,7 +171,7 @@
                                                 {% trans "Rejected" %}
                                             </span>
                                         {% endif %}
-                                    </h5>
+                                    </h3>
                                 </div>
                                 <div id="activity-{{ forloop.counter }}" class="collapse">
                                     <div class="card card-body">
@@ -204,11 +204,11 @@
                     {% else %}
                         <div>
                             <div class="card-header">
-                                <h5 class="card-title" style="display: contents;"">
+                                <h3 class="card-title">
                                     <div class="accordion-toggle">
                                         {% trans "There isn't any rejected activity yet." %}
                                     </div>
-                                </h5>
+                                </h3>
                             </div>
                         </div>
                     {% endif %}

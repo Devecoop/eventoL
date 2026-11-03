@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block page-header %}{% trans "Registration Closed" %}{% endblock %}
+{% block page-header %}<h1 class="page-title">{% trans "Registration Closed" %}</h1>{% endblock %}
 {% block content %}
     <div class="card">
         {% if event.is_flisol %}
-            <h4><b class="fa fa-frown-o"></b> {% blocktrans %}Registration for this event is already
+            <p><b class="fa fa-frown-o"></b> {% blocktrans %}Registration for this event is already
             closed or the event is no accepting registrations through this page. You can find more
-            info{% endblocktrans %} <a href="{% url "FAQ"  event_slug %}">{% trans "here" %}.</a></h4>
+            info{% endblocktrans %} <a href="{% url "FAQ"  event_slug %}">{% trans "here" %}.</a></p>
         {% elif event.registration_closed %}
-            <h4> <b class="fa fa-calendar"></b> Registration for this event is temporarily closed. Wait for it! </h4>
+            <p> <b class="fa fa-calendar"></b> Registration for this event is temporarily closed. Wait for it! </p>
         {% else %}
-            <h4><b class="fa fa-calendar"></b> Registration for this event is already closed.<h4>
+            <p><b class="fa fa-calendar"></b> Registration for this event is already closed.</p>
         {% endif %}
     </div>
 {% endblock %}

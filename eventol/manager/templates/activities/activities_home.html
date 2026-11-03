@@ -18,9 +18,9 @@
     </style>
 {% endblock %}
 {% block page-header %}
-    <div class="row justify-content-between">
-        <h1>{% trans "Activities" %}</h1>
-        <div id="buttons" class="float-right">
+    <div class="page-heading-row">
+        <h1 class="page-title">{% trans "Activities" %}</h1>
+        <div id="buttons" class="page-actions">
             {% if user.is_authenticated and user|is_organizer:event_slug %}
                 <div class="btn btn-raised dropdown" style="padding: 0px;">
                     <button class="btn btn-raised btn-success dropdown-toggle" style="margin: 0px;" id="speakersDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -70,7 +70,7 @@
 {% endblock %}
 {% block content %}
     {% if dummy_activities %}
-        <h3 class='row'>{% trans "Dummy activities" %}</h3>
+        <h2 class="section-title">{% trans "Dummy activities" %}</h2>
         <br>
 
         <div class="row">
@@ -78,13 +78,13 @@
                 {% for dummy_activity in dummy_activities %}
                     <div>
                         <div class="card-header d-inline-block  w-100">
-                            <h5 class="card-title" style="display: contents;">
+                            <h3 class="card-title">
                                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion"
                                    href="#dummy-activity-{{ forloop.counter }}">
                                     {{ dummy_activity.title }} - {{ dummy_activity.schedule }}
                                     <i class="indicator fa fa-chevron-down pull-right"></i>
                                 </a>
-                            </h5>
+                            </h3>
                         </div>
                         <div id="dummy-activity-{{ forloop.counter }}" class="collapse">
                             <div class="card card-body">
@@ -121,7 +121,7 @@
         </div>
     {% endif %}
     {% if accepted_activities or proposed_activities or rejected_activities %}
-        <h3 class='row'>{% trans "Confirmed" %}</h3>
+        <h2 class="section-title">{% trans "Confirmed" %}</h2>
         <br>
 
         <div class="row">
@@ -130,7 +130,7 @@
                     {% for talk in accepted_activities %}
                         <div>
                             <div class="card-header d-inline-block  w-100">
-                                <h5 class="card-title" style="display: contents;">
+                                <h3 class="card-title">
                                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion"
                                        href="#talk-{{ forloop.counter }}">
                                         {{ talk.title }} - {{ talk.schedule }}
@@ -142,7 +142,7 @@
                                             {% trans "Confirmed" %}
                                         </span>
                                     {% endif %}
-                                </h5>
+                                </h3>
                             </div>
                             <div id="talk-{{ forloop.counter }}" class="collapse">
                                 <div class="card card-body">
@@ -219,18 +219,18 @@
                 {% else %}
                     <div>
                         <div class="card-header d-inline-block  w-100">
-                            <h5 class="card-title" style="display: contents;">
+                            <h3 class="card-title">
                                 <div class="accordion-toggle">
                                     {% trans "There isn't any proposed activity yet." %}
                                 </div>
-                            </h5>
+                            </h3>
                         </div>
                     </div>
                 {% endif %}
                 </div>
             </div>
 
-            <h3 class='row'>{% trans "Proposed" %}</h3>
+            <h2 class="section-title">{% trans "Proposed" %}</h2>
             <br>
 
             <div class="row">
@@ -239,7 +239,7 @@
                         {% for proposal in proposed_activities %}
                             <div>
                                 <div class="card-header d-inline-block  w-100">
-                                    <h5 class="card-title" style="display: contents;">
+                                    <h3 class="card-title">
                                         <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion"
                                            href="#proposal-{{ forloop.counter }}">
                                             {{ proposal.title }}
@@ -268,7 +268,7 @@
                                             {% endif %}
                                           </div>
                                         {% endif %}
-                                    </h5>
+                                    </h3>
                                 </div>
                                 <div id="proposal-{{ forloop.counter }}" class="collapse">
                                     <div class="card card-body">
@@ -336,18 +336,18 @@
                     {% else %}
                         <div>
                             <div class="card-header d-inline-block  w-100">
-                                <h5 class="card-title" style="display: contents;">
+                                <h3 class="card-title">
                                     <div class="accordion-toggle">
                                         {% trans "There isn't any proposed activity yet." %}
                                     </div>
-                                </h5>
+                                </h3>
                             </div>
                         </div>
                     {% endif %}
                 </div>
             </div>
 
-            <h3 class='row'>{% trans "Rejected" %}</h3>
+            <h2 class="section-title">{% trans "Rejected" %}</h2>
             <br>
 
             <div class="row">
@@ -356,7 +356,7 @@
                         {% for activity in rejected_activities %}
                             <div>
                                 <div class="card-header d-inline-block  w-100">
-                                    <h5 class="card-title" style="display: contents;">
+                                    <h3 class="card-title">
                                         <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion"
                                            href="#activity-{{ forloop.counter }}">
                                             {{ activity.title }}
@@ -367,7 +367,7 @@
                                                 {% trans "Rejected" %}
                                             </span>
                                         {% endif %}
-                                    </h5>
+                                    </h3>
                                 </div>
                                 <div id="activity-{{ forloop.counter }}" class="collapse">
                                     <div class="card card-body">
@@ -414,11 +414,11 @@
                     {% else %}
                         <div>
                             <div class="card-header d-inline-block  w-100">
-                                <h5 class="card-title" style="display: contents;">
+                                <h3 class="card-title">
                                     <div class="accordion-toggle">
                                         {% trans "There isn't any rejected activity yet." %}
                                     </div>
-                                </h5>
+                                </h3>
                             </div>
                         </div>
                     {% endif %}

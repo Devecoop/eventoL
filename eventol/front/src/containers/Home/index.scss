@@ -1,0 +1,57 @@
+@import '../../styles/index';
+
+html,
+body,
+div,
+span,
+p,
+a,
+ul,
+li,
+header,
+nav {
+  border: 0;
+  font: inherit;
+  font-size: 100%;
+  margin: 0;
+  padding: 0;
+  vertical-align: baseline;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+q,
+blockquote {
+  quotes: none;
+
+  &::before,
+  &::after {
+    content: '';
+  }
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+body {
+  background: $body-background;
+  color: $body-color;
+  font-family: $design-font-body;
+  line-height: $design-line-height;
+}
+
+h2 {
+  @include design-heading($design-font-section-title, $design-font-section-title-mobile);
+}
+
+p {
+  font-size: $design-font-body-size;
+  font-weight: $design-weight-normal;
+  line-height: $design-line-height;
+  margin-bottom: 1em;
+}

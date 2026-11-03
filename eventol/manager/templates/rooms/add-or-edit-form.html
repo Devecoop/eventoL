@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 
-{% block page-header %}{% if is_edit %}{% trans "Edit a Room" %}{% else %}{% trans "Submit a Room" %}{% endif %}{% endblock %}
+{% block page-header %}<h1 class="page-title">{% if is_edit %}{% trans "Edit a Room" %}{% else %}{% trans "Submit a Room" %}{% endif %}</h1>{% endblock %}
 {% block page-name %}{% if is_edit %}{% trans "Edit a Room" %}{% else %}{% trans "Submit a Room" %}{% endif %}{% endblock %}
 {% block form-id %}{% if is_edit %}"edit-room-form"{% else %}"add-room-form"{% endif %}{% endblock %}
 {% block form-name %}{% if is_edit %}{% trans "Edit a Room" %}{% else %}{% trans "Submit a Room" %}{% endif %}{% endblock %}

@@ -1,0 +1,51 @@
+// Reusable primitives. Includes emit declarations only where requested.
+@mixin design-focus {
+  outline: $design-focus-width solid $design-primary;
+  outline-offset: -$design-focus-width;
+}
+
+@mixin design-card {
+  background: $design-card-background;
+  border: 1px solid $design-card-border;
+  border-radius: $design-radius-card;
+  color: $design-card-text;
+  overflow: hidden;
+}
+
+@mixin design-tag {
+  background: $design-primary;
+  border-radius: $design-radius-small;
+  color: $design-card-text;
+  font-size: $design-font-small;
+  line-height: $design-line-height;
+  margin: 0 6px 6px 0;
+  padding: 3px 7px;
+}
+
+@mixin design-menu-item {
+  border-radius: 3px;
+  font-size: $design-font-base;
+  font-weight: $design-weight-normal;
+  padding: 7px 10px;
+  transition: background $design-transition-menu;
+
+  &:hover,
+  &:focus-within {
+    background: $design-primary;
+    cursor: pointer;
+  }
+}
+
+// Shared by Bootstrap pages and the remaining React styles.
+@mixin design-heading($size, $mobile-size) {
+  font-family: $design-font-heading;
+  font-size: $size;
+  font-weight: $design-weight-semibold;
+  line-height: $design-heading-line-height;
+  margin: 0 0 $design-space-4;
+  overflow-wrap: break-word;
+
+  @media (max-width: $design-breakpoint-type - 1) {
+    font-size: $mobile-size;
+  }
+}

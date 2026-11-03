@@ -42,6 +42,7 @@ from djqscsv import render_to_csv_response
 from lxml import etree
 
 from manager.constants import CAN_TAKE_ATTENDANCE_PERMISSION_CODE_NAME
+from manager.home import home_sections, search_section
 from manager.forms import (
     ActivityDummyForm,
     ActivityForm,
@@ -218,7 +219,16 @@ def home(request):
         role = request.session.pop('registration_role')
         event_index = reverse(f'{role}_registration', args=[event_slug])
         return redirect(event_index)
-    return render(request, 'index.html')
+    context = {'sections': home_sections(request)}
+    if request.GET.get('search'):
+        context['search_section'] = search_section(request)
+    return render(request, 'index.html', context)
+
+
+def home_search(request):
+    return render(request, 'home/search_results.html', {
+        'search_section': search_section(request) if request.GET.get('search') else None,
+    })
 
 
 @login_required
