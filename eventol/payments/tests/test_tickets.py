@@ -6,6 +6,8 @@ from decimal import Decimal
 import pytest
 from django.conf import settings as django_settings
 from django.core import mail
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.urls import reverse
 from django.utils import timezone
 
@@ -156,3 +158,23 @@ def test_attendees_without_dni_do_not_collide(event):
     Attendee.objects.create(event=event, email='beto@example.com', dni='')
     Attendee.objects.create(event=event, email='caro@example.com', dni='')
     assert Attendee.objects.filter(event=event).count() == 3
+
+
+def test_attendee_model_rejects_a_repeated_email_without_dni(event):
+    Attendee.objects.create(event=event, email='ana@example.com')
+    with pytest.raises(ValidationError, match='You are already registered for this event'):
+        Attendee(event=event, email='ANA@example.com').full_clean(exclude=['custom_fields'])
+
+
+def test_database_rejects_a_repeated_email_without_dni(event):
+    Attendee.objects.create(event=event, email='ana@example.com')
+    with pytest.raises(IntegrityError):
+        Attendee.objects.create(event=event, email='ana@example.com')
+
+
+def test_the_same_email_can_have_tickets_for_different_dnis(event):
+    Attendee.objects.create(event=event, email='ana@example.com', dni='30000000')
+    attendee = Attendee(event=event, email='ana@example.com', dni='30000001')
+    attendee.full_clean(exclude=['custom_fields'])
+    attendee.save()
+    assert Attendee.objects.filter(event=event, email='ana@example.com').count() == 2

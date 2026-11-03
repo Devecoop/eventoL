@@ -754,13 +754,27 @@ class Attendee(models.Model):
                 condition=models.Q(dni__isnull=False) & ~models.Q(dni=''),
                 name='unique_attendee_dni_by_event',
                 violation_error_message=_('There is already a ticket for this DNI'),
-            )
+            ),
+            models.UniqueConstraint(
+                fields=['event', 'email'],
+                condition=models.Q(dni__isnull=True) | models.Q(dni=''),
+                name='unique_attendee_email_by_event',
+                violation_error_message=_('You are already registered for this event'),
+            ),
         ]
 
     def __str__(self):
         if self.event_user:
             return str(self.event_user)
         return f'{self.event} - {self.first_name} {self.last_name} - {self.nickname} - {self.email}'
+
+    def clean(self):
+        # Without DNI (free registration) an email registers only once by event, ignoring case
+        if self.dni or not self.event_id or not self.email:
+            return
+        attendees = Attendee.objects.filter(event_id=self.event_id, email__iexact=self.email)
+        if attendees.exclude(pk=self.pk).exists():
+            raise ValidationError(_('You are already registered for this event'))
 
     def get_ticket_data(self):
         if self.ticket is None:
