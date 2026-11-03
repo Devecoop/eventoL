@@ -18,6 +18,7 @@ logger = logging.getLogger('eventol')
 def _create_attendee(order, item):
     try:
         with transaction.atomic():
+            ticket = Ticket.objects.create()
             attendee = Attendee.objects.create(
                 event=order.event,
                 first_name=item.first_name,
@@ -26,7 +27,7 @@ def _create_attendee(order, item):
                 email=item.ticket_email,
                 email_confirmed=True,
                 registration_date=timezone.now(),
-                ticket=Ticket.objects.create(),
+                ticket=ticket,
             )
             item.attendee = attendee
             item.save(update_fields=['attendee'])
