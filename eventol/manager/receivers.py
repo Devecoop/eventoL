@@ -58,12 +58,11 @@ def _send_tickets(order, attendees):
         logger.exception('Could not send the tickets of order %s', order.id)
 
     for attendee in attendees:
-        if attendee.email.lower() == order.buyer_email.lower():
-            continue
-        try:
-            send_event_ticket(attendee)
-        except Exception:  # pylint: disable=broad-except
-            logger.exception('Could not send the ticket of attendee %s', attendee.pk)
+        if attendee.email.lower() != order.buyer_email.lower():
+            try:
+                send_event_ticket(attendee)
+            except Exception:  # pylint: disable=broad-except
+                logger.exception('Could not send the ticket of attendee %s', attendee.pk)
 
 
 @receiver(order_paid, sender=Order)
