@@ -1,7 +1,7 @@
 # payments: cobro de entradas con Mercado Pago
 
 App autocontenida que cobra órdenes de entradas con **Checkout Pro** en modo **marketplace**:
-- la cuenta vendedora (por ejemplo, Gran Pez) recibe el pago;
+- la cuenta vendedora (por ejemplo, la organización del evento) recibe el pago;
 - la aplicación de Devecoop retiene `MP_MARKETPLACE_FEE_PERCENT` como `marketplace_fee`.
 
 Los eventos con `is_paid` venden sus entradas desde `/events/<slug>/purchase` (ver [Integración](#integración)).

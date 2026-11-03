@@ -20,8 +20,8 @@ def test_build_sdk_without_token_never_works():
 
 @pytest.mark.django_db
 def test_create_preference_body(event, seller):
-    buyer = domain.Buyer(name='Ana Pez', email='ana@example.com', phone='1122334455')
-    people = [domain.AttendeeData(first_name='Ana', last_name='Pez', dni='30000000')] * 2
+    buyer = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
+    people = [domain.AttendeeData(first_name='Ana', last_name='Garcia', dni='30000000')] * 2
     sdk = mock.Mock()
     sdk.preference.return_value.create.return_value = {
         'status': 201,

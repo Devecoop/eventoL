@@ -15,12 +15,12 @@ from .conftest import mp_payment
 
 pytestmark = pytest.mark.django_db
 
-BUYER = domain.Buyer(name='Ana Pez', email='ana@example.com', phone='1122334455')
+BUYER = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
 
 
 def attendees(quantity):
     return [
-        domain.AttendeeData(first_name='Ana', last_name=f'Pez {number}', dni=f'3000000{number}')
+        domain.AttendeeData(first_name='Ana', last_name=f'Garcia {number}', dni=f'3000000{number}')
         for number in range(quantity)
     ]
 

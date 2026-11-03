@@ -29,7 +29,7 @@ def purchase_url(event, quantity=None):
 def purchase_data(*dnis, emails=None):
     emails = emails or [''] * len(dnis)
     data = {
-        'name': 'Ana Pez',
+        'name': 'Ana Garcia',
         'email': 'ana@example.com',
         'phone': '1122334455',
         'captcha_0': 'key',
@@ -43,7 +43,7 @@ def purchase_data(*dnis, emails=None):
         data.update(
             {
                 f'attendees-{index}-first_name': f'Person {index}',
-                f'attendees-{index}-last_name': 'Pez',
+                f'attendees-{index}-last_name': 'Garcia',
                 f'attendees-{index}-dni': dni,
                 f'attendees-{index}-email': email,
             }

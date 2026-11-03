@@ -40,9 +40,9 @@ def captcha_passes(monkeypatch):
 @pytest.fixture
 def event(db):  # pylint: disable=unused-argument
     return Event.objects.create(
-        name='Gran Pez Fest',
-        event_slug='gran-pez',
-        email='info@granpez.test',
+        name='Test Fest',
+        event_slug='test-fest',
+        email='info@testfest.test',
         abstract='Fest',
         limit_proposal_date=timezone.localdate(),
     )

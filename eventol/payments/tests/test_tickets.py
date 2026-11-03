@@ -31,11 +31,11 @@ def ticket_settings(settings):
 @pytest.fixture
 def order(event, seller, preference, ticket_settings):
     EventDate.objects.create(event=event, date=timezone.localdate() + timedelta(days=10))
-    buyer = domain.Buyer(name='Ana Pez', email='ana@example.com', phone='1122334455')
+    buyer = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
     people = [
-        domain.AttendeeData(first_name='Ana', last_name='Pez', dni='30000000'),
+        domain.AttendeeData(first_name='Ana', last_name='Garcia', dni='30000000'),
         domain.AttendeeData(
-            first_name='Beto', last_name='Pez', dni='30000001', email='beto@example.com'
+            first_name='Beto', last_name='Garcia', dni='30000001', email='beto@example.com'
         ),
     ]
     return domain.create_order(event, buyer, people, '1000')
@@ -83,7 +83,7 @@ def test_buyer_tickets_are_queued_in_celery_when_enabled(
     attendee_ids = sorted(Attendee.objects.filter(event=order.event).values_list('pk', flat=True))
     assert len(queued) == 1
     event_name, buyer_name, email_to, queued_ids = queued[0]
-    assert (event_name, buyer_name, email_to) == (order.event.name, 'Ana Pez', 'ana@example.com')
+    assert (event_name, buyer_name, email_to) == (order.event.name, 'Ana Garcia', 'ana@example.com')
     assert sorted(queued_ids) == attendee_ids
 
 

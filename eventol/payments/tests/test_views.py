@@ -16,8 +16,8 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def order(event, seller, preference):
-    buyer = domain.Buyer(name='Ana Pez', email='ana@example.com', phone='1122334455')
-    people = [domain.AttendeeData(first_name='Ana', last_name='Pez', dni='30000000')]
+    buyer = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
+    people = [domain.AttendeeData(first_name='Ana', last_name='Garcia', dni='30000000')]
     return domain.create_order(event, buyer, people, '1000')
 
 
