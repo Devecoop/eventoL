@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from payments import domain, services
+from payments import constants, domain, services
 
 from .conftest import sign
 
@@ -71,6 +71,6 @@ def test_webhook_secret_is_mandatory_without_debug(settings):
 
 def test_authorization_url_includes_state():
     url = services.build_authorization_url('my-state')
-    assert url.startswith(services.OAUTH_AUTHORIZATION_URL)
+    assert url.startswith(constants.OAUTH_AUTHORIZATION_URL)
     assert 'state=my-state' in url
     assert 'client_id=client-id' in url

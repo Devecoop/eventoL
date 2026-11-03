@@ -22,11 +22,9 @@ from django.conf import settings
 from django.urls import reverse
 from mercadopago import webhook as mp_webhook
 
-logger = logging.getLogger(__name__)
+from payments.constants import OAUTH_AUTHORIZATION_URL, OAUTH_TOKEN_URL, REQUEST_TIMEOUT
 
-OAUTH_AUTHORIZATION_URL = 'https://auth.mercadopago.com.ar/authorization'
-OAUTH_TOKEN_URL = 'https://api.mercadopago.com/oauth/token'  # noqa: S105
-REQUEST_TIMEOUT = 15
+logger = logging.getLogger(__name__)
 
 
 class MercadoPagoError(RuntimeError):
