@@ -41,7 +41,10 @@ from django.utils.version import get_version
 from djqscsv import render_to_csv_response
 from lxml import etree
 
-from manager.constants import CAN_TAKE_ATTENDANCE_PERMISSION_CODE_NAME
+from manager.constants import (
+    CAN_TAKE_ATTENDANCE_PERMISSION_CODE_NAME,
+    CANCELLED_TICKET_MESSAGE,
+)
 from manager.forms import (
     ActivityDummyForm,
     ActivityForm,
@@ -103,8 +106,6 @@ from manager.utils import email as utils_email
 from manager.utils.report import count_by
 
 logger = logging.getLogger('eventol')
-
-CANCELLED_TICKET_MESSAGE = _noop('The ticket was cancelled: it does not allow entry')
 
 
 # Auxiliary functions
