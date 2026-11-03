@@ -572,6 +572,8 @@ class EventForm(ModelForm):
         ticket_price = cleaned_data.get('ticket_price')
         if not ticket_price or ticket_price <= 0:
             self.add_error('ticket_price', _('A paid event needs a ticket price greater than 0'))
+        # An account without event is the default seller of the instance and receives the payments
+        # of every event; an account with event only receives the payments of that event
         sellers = SellerAccount.objects.filter(event__isnull=True)
         if self.instance.pk:
             sellers = sellers | SellerAccount.objects.filter(event=self.instance)
