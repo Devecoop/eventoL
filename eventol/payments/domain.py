@@ -151,6 +151,7 @@ def _validate_payment(order, data):
 
 
 def _save_payment(order, data, validation_error):
+    date_approved = parse_datetime(data['date_approved']) if data.get('date_approved') else None
     payment, _created = Payment.objects.update_or_create(
         mp_payment_id=str(data['id']),
         defaults={
@@ -161,9 +162,7 @@ def _save_payment(order, data, validation_error):
             'currency': data.get('currency_id') or '',
             'collector_id': str(data.get('collector_id') or ''),
             'payment_method': data.get('payment_method_id') or '',
-            'date_approved': parse_datetime(data['date_approved'])
-            if data.get('date_approved')
-            else None,
+            'date_approved': date_approved,
             'validation_error': validation_error,
             'raw': data,
         },
