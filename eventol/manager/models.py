@@ -161,7 +161,7 @@ class Event(models.Model):
     is_paid = models.BooleanField(
         _('Is paid'),
         default=False,
-        help_text=_('Attendees buy their tickets with Mercado Pago'),
+        help_text=_('Attendees buy their tickets'),
     )
     ticket_price = models.DecimalField(
         _('Ticket price'), max_digits=10, decimal_places=2, blank=True, null=True

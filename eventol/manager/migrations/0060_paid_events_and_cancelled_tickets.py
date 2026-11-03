@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='event',
             name='is_paid',
-            field=models.BooleanField(default=False, help_text='Attendees buy their tickets with Mercado Pago', verbose_name='Is paid'),
+            field=models.BooleanField(default=False, help_text='Attendees buy their tickets', verbose_name='Is paid'),
         ),
         migrations.AddField(
             model_name='event',
