@@ -51,6 +51,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='attendee',
-            constraint=models.UniqueConstraint(condition=models.Q(('dni__isnull', False)), fields=('event', 'dni'), name='unique_attendee_dni_by_event', violation_error_message='There is already a ticket for this DNI'),
+            constraint=models.UniqueConstraint(condition=models.Q(('dni__isnull', False), models.Q(('dni', ''), _negated=True)), fields=('event', 'dni'), name='unique_attendee_dni_by_event', violation_error_message='There is already a ticket for this DNI'),
         ),
     ]

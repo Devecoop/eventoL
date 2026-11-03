@@ -751,7 +751,7 @@ class Attendee(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['event', 'dni'],
-                condition=models.Q(dni__isnull=False),
+                condition=models.Q(dni__isnull=False) & ~models.Q(dni=''),
                 name='unique_attendee_dni_by_event',
                 violation_error_message=_('There is already a ticket for this DNI'),
             )
@@ -761,11 +761,6 @@ class Attendee(models.Model):
         if self.event_user:
             return str(self.event_user)
         return f'{self.event} - {self.first_name} {self.last_name} - {self.nickname} - {self.email}'
-
-    def save(self, *args, **kwargs):
-        # An empty DNI is stored as NULL so it does not count for the unique constraint
-        self.dni = self.dni or None
-        super().save(*args, **kwargs)
 
     def get_ticket_data(self):
         if self.ticket is None:

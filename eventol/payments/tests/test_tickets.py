@@ -152,6 +152,7 @@ def test_free_registration_still_rejects_a_repeated_email(event, captcha_passes)
 
 
 def test_attendees_without_dni_do_not_collide(event):
-    Attendee.objects.create(event=event, email='ana@example.com', dni='')
+    Attendee.objects.create(event=event, email='ana@example.com')
     Attendee.objects.create(event=event, email='beto@example.com', dni='')
-    assert Attendee.objects.filter(event=event, dni__isnull=True).count() == 2
+    Attendee.objects.create(event=event, email='caro@example.com', dni='')
+    assert Attendee.objects.filter(event=event).count() == 3
