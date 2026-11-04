@@ -5,7 +5,6 @@ from urllib.parse import parse_qs, urlparse
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from manager.models import Event
 from payments import services
 from payments.models import SellerAccount
 
@@ -18,19 +17,9 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--event',
-            help='Event slug, to link an account only for that event (default: all events)',
-        )
         parser.add_argument('--code', help='Authorization code, to skip the interactive step')
 
     def handle(self, *args, **options):
-        event = None
-        if options['event']:
-            event = Event.objects.filter(event_slug=options['event']).first()
-            if event is None:
-                raise CommandError(f'Event "{options["event"]}" does not exist')
-
         code = options['code'] or self._ask_code()
         try:
             data = services.exchange_code(code)
@@ -40,7 +29,7 @@ class Command(BaseCommand):
         seller = SellerAccount.objects.filter(
             mp_user_id=str(data['user_id'])
         ).first() or SellerAccount(mp_user_id=str(data['user_id']))
-        seller.event = event
+        seller.linked_at = timezone.now()
         seller.public_key = data.get('public_key', '')
         seller.access_token = data['access_token']
         seller.refresh_token = data['refresh_token']

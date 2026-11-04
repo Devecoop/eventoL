@@ -90,6 +90,6 @@ class WebhookEventAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
 @admin.register(SellerAccount)
 class SellerAccountAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     # Tokens are never shown; use the mp_link_seller command to link an account
-    list_display = ('mp_user_id', 'event', 'expires_at', 'updated_at')
-    fields = ('mp_user_id', 'event', 'public_key', 'expires_at', 'created_at', 'updated_at')
+    list_display = ('mp_user_id', 'linked_at', 'expires_at', 'updated_at')
+    fields = ('mp_user_id', 'linked_at', 'public_key', 'expires_at', 'created_at', 'updated_at')
     readonly_fields = fields

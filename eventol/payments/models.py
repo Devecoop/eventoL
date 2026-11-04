@@ -17,20 +17,14 @@ class SellerAccountNotConfiguredError(Exception):
 class SellerAccount(models.Model):
     """Mercado Pago account that receives the money, linked by OAuth to the marketplace app.
 
-    ``event`` empty means the default seller of the instance.
+    The instance has one seller: the last linked account. The previous accounts are kept for
+    their orders (pending payments and reconciliation).
     """
 
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
     mp_user_id = models.CharField(_('Mercado Pago user id'), max_length=50, unique=True)
-    event = models.ForeignKey(
-        Event,
-        verbose_name=_('Event'),
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-        help_text=_('Leave empty to use this account for every event'),
-    )
+    linked_at = models.DateTimeField(_('Linked at'), default=timezone.now)
     public_key = models.CharField(_('Public key'), max_length=200, blank=True)
     encrypted_access_token = models.TextField(editable=False)
     encrypted_refresh_token = models.TextField(editable=False)
@@ -41,7 +35,7 @@ class SellerAccount(models.Model):
         verbose_name_plural = _('Seller accounts')
 
     def __str__(self):
-        return f'{self.mp_user_id} ({self.event or _("default")})'
+        return self.mp_user_id
 
     @property
     def access_token(self):
@@ -63,11 +57,9 @@ class SellerAccount(models.Model):
         return self.expires_at <= timezone.now() + timedelta(days=days)
 
     @classmethod
-    def for_event(cls, event):
-        seller = (
-            cls.objects.filter(event=event).first()
-            or cls.objects.filter(event__isnull=True).first()
-        )
+    def current(cls):
+        """The seller of the new orders: the last linked account."""
+        seller = cls.objects.order_by('-linked_at').first()
         if seller is None:
             raise SellerAccountNotConfiguredError(
                 _('There is no Mercado Pago account linked. Run "mp_link_seller".')

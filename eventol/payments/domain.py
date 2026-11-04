@@ -91,7 +91,7 @@ def create_order(event, buyer, attendees, unit_price, quota=None):  # noqa: PLR0
         raise InvalidOrderError('An order needs at least one attendee')
     if unit_price <= 0:
         raise InvalidOrderError('The ticket price must be greater than zero')
-    seller = SellerAccount.for_event(event)
+    seller = SellerAccount.current()
     total = unit_price * len(attendees)
 
     with transaction.atomic():
@@ -261,7 +261,7 @@ def _refund(order, payment):
 
 def _seller_for_notification(mp_user_id):
     seller = SellerAccount.objects.filter(mp_user_id=mp_user_id).first() if mp_user_id else None
-    return seller or SellerAccount.for_event(None)
+    return seller or SellerAccount.current()
 
 
 def process_webhook_event(event_id):

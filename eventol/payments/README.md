@@ -26,7 +26,7 @@ Sin credenciales, las operaciones fallan: **nunca** se aprueba un pago sin Merca
 
 1. `python manage.py migrate`
 2. Vincular la cuenta vendedora (una sola vez; el token se renueva solo):
-   `python manage.py mp_link_seller`. Imprime la URL de autorización: abrirla logueado con la cuenta vendedora, aceptar y pegar la URL a la que redirige MP. `--event <slug>` vincula una cuenta solo para ese evento.
+   `python manage.py mp_link_seller`. Imprime la URL de autorización: abrirla logueado con la cuenta vendedora, aceptar y pegar la URL a la que redirige MP. Hay una sola cuenta vendedora para toda la instancia: vincular otra cuenta la reemplaza para las órdenes nuevas.
 3. Reconciliación periódica (pagos cuyo webhook no llegó + renovación del token):
    - **cron:** `python manage.py sync_mp_orders`, por ejemplo cada 15 minutos;
    - **celery beat:** la tarea `payments.tasks.reconcile_pending_orders_task`.
@@ -35,7 +35,7 @@ Sin credenciales, las operaciones fallan: **nunca** se aprueba un pago sin Merca
 
 ## Modelo
 
-- `SellerAccount`: cuenta vendedora con los tokens cifrados. `event` vacío = vendedora por defecto.
+- `SellerAccount`: cuenta vendedora con los tokens cifrados. Las órdenes nuevas usan la última vinculada (`SellerAccount.current()`); las anteriores quedan para sus órdenes.
 - `Order`: el UUID es el `external_reference` en MP.
   - Estados: `pending` → `approved` | `approved_over_quota` → `refunded`.
   - Los intentos rechazados no cambian el estado de la orden: el comprador puede reintentar.
