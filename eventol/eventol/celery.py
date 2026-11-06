@@ -30,7 +30,7 @@ app = Celery(
     timezone=env('TIME_ZONE'),
     task_eager_propagates=True,
     task_always_eager=False,
-    include=['manager.tasks', 'manager.utils.email'],
+    include=['manager.tasks', 'manager.utils.email', 'payments.tasks'],
 )
 app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)

@@ -50,6 +50,7 @@ urlpatterns = [
     re_path(r'^create-event/$', views.create_event, name='create_event'),
     re_path(r'^events/', include('manager.urls.events'), name='events'),
     re_path(r'^tags/', include('manager.urls.event_tags'), name='event_tags'),
+    re_path(r'^payments/', include('payments.urls')),
     re_path(r'^admin/', admin.site.urls, name='admin'),
     re_path(
         r'^accounts/profile/',

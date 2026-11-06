@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_noop as _noop
+
 ADD_ATTENDEE_PERMISSION_CODE_NAME = 'add_attendee'
 ADD_ATTENDEE_PERMISSION_NAME = 'Add Attendee'
 
@@ -116,3 +118,5 @@ REPORTER_PERMISSION_CODE_NAMES = [
     'change_room',
     'delete_room',
 ]
+
+CANCELLED_TICKET_MESSAGE = _noop('The ticket was cancelled: it does not allow entry')

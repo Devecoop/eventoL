@@ -5,6 +5,7 @@
 # ruff: noqa: N813
 
 import os
+from decimal import Decimal
 
 import environ
 from configurations import Configuration
@@ -58,6 +59,14 @@ env = environ.Env(
     ),
     JAZZMIN_LANGUAGE_CHOOSER=(bool, os.getenv('JAZZMIN_LANGUAGE_CHOOSER', 'True')),
     CELERY_ENABLED=(bool, os.getenv('CELERY_ENABLED', 'False')),
+    MP_CLIENT_ID=(str, os.getenv('MP_CLIENT_ID', '')),
+    MP_CLIENT_SECRET=(str, os.getenv('MP_CLIENT_SECRET', '')),
+    MP_WEBHOOK_SECRET=(str, os.getenv('MP_WEBHOOK_SECRET', '')),
+    MP_TOKEN_ENCRYPTION_KEY=(str, os.getenv('MP_TOKEN_ENCRYPTION_KEY', '')),
+    MP_OAUTH_REDIRECT_URI=(str, os.getenv('MP_OAUTH_REDIRECT_URI', '')),
+    MP_BASE_URL=(str, os.getenv('MP_BASE_URL', '')),
+    MP_MARKETPLACE_FEE_PERCENT=(str, os.getenv('MP_MARKETPLACE_FEE_PERCENT', '3')),
+    MP_RESERVATION_MINUTES=(int, os.getenv('MP_RESERVATION_MINUTES', '30')),
 )
 
 
@@ -102,6 +111,7 @@ class Base(Configuration):
         'image_cropping',
         'import_export',
         'manager',
+        'payments',
         'djangoformsetjs',
         'django.contrib.sites',
         'allauth',
@@ -389,6 +399,10 @@ class Base(Configuration):
             'manager.Room': 'fas fa-door-open',
             'manager.Software': 'fas fa-code',
             'manager.Ticket': 'fas fa-ticket-alt',
+            'payments.Order': 'fas fa-shopping-cart',
+            'payments.Payment': 'fas fa-money-bill-wave',
+            'payments.SellerAccount': 'fas fa-store',
+            'payments.WebhookEvent': 'fas fa-bell',
             'sites.Site': 'fas fa-globe',
         },
     }
@@ -397,7 +411,17 @@ class Base(Configuration):
     }
     LIST_PER_PAGE = int(env('LIST_PER_PAGE'))
     ModelAdmin.list_per_page = LIST_PER_PAGE
-    CELERY_ENABLED = env('CELERY_ENABLED')
+    CELERY_ENABLED = env.get_value('CELERY_ENABLED', cast=bool, parse_default=True)
+
+    # Mercado Pago (payments app)
+    MP_CLIENT_ID = env('MP_CLIENT_ID')
+    MP_CLIENT_SECRET = env('MP_CLIENT_SECRET')
+    MP_WEBHOOK_SECRET = env('MP_WEBHOOK_SECRET')
+    MP_TOKEN_ENCRYPTION_KEY = env('MP_TOKEN_ENCRYPTION_KEY')
+    MP_OAUTH_REDIRECT_URI = env('MP_OAUTH_REDIRECT_URI')
+    MP_BASE_URL = env('MP_BASE_URL') or f'https://{env("APP_DNS")}'
+    MP_MARKETPLACE_FEE_PERCENT = Decimal(env('MP_MARKETPLACE_FEE_PERCENT'))
+    MP_RESERVATION_MINUTES = int(env('MP_RESERVATION_MINUTES'))
 
     MAP_WIDGETS = {
         'Leaflet': {

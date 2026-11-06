@@ -4,6 +4,9 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.utils.translation import gettext as _
 
+from manager.models import Attendee, Ticket
+from manager.views import generate_ticket
+
 
 def get_activity_subject(event_name):
     return _('New information about your talk in the {event_name} event').format(
@@ -64,6 +67,26 @@ def get_ticket_body(first_name, last_name, event_name):
         '<p>Regards,</p>\n'
         '<p>{event_name} and <em>eventoL</em> team</p>'
     ).format(first_name=first_name, last_name=last_name, event_name=event_name)
+    return (body_txt, body_html)
+
+
+def get_order_tickets_body(buyer_name, event_name, quantity):
+    body_txt = _(
+        'Hello {buyer_name},\n'
+        'Thank you for your purchase! Here are your {quantity} ticket(s) for {event_name} event.\n'
+        'Please remember to print them and bring them with you the day(s) of the event.\n'
+        'Regards,\n'
+        '{event_name} and eventoL team'
+    ).format(buyer_name=buyer_name, event_name=event_name, quantity=quantity)
+    body_html = _(
+        '<p>Hello {buyer_name},</p><br />\n'
+        '<p>Thank you for your purchase! Here are your {quantity} ticket(s) for {event_name} event.'
+        '</p>\n'
+        '<p>Please remember to <em>print them and bring them with you</em> the day(s) of the event.'
+        '</p>\n'
+        '<p>Regards,</p>\n'
+        '<p>{event_name} and <em>eventoL</em> team</p>'
+    ).format(buyer_name=buyer_name, event_name=event_name, quantity=quantity)
     return (body_txt, body_html)
 
 
@@ -129,6 +152,30 @@ def send_ticket_email(ticket_data, ticket_svg):
         f'Ticket-{ticket_code}.pdf', cairosvg.svg2pdf(bytestring=ticket_svg), 'application/pdf'
     )
     email.send(fail_silently=settings.EMAIL_FAIL_SILENTY)
+
+
+@shared_task
+def send_order_tickets_email(event_name, buyer_name, email_to, attendee_ids):
+    """Send every ticket of a purchase to the buyer in one e-mail.
+
+    Receives the attendee ids instead of the SVG images (see send_ticket_email) and generates the
+    tickets here, so it can run in celery.
+    """
+    attendees = Attendee.objects.filter(pk__in=attendee_ids).select_related('ticket')
+    email = EmailMultiAlternatives()
+    email.subject = get_ticket_subject(event_name)
+    body_txt, body_html = get_order_tickets_body(buyer_name, event_name, len(attendees))
+    email.body = body_txt
+    email.attach_alternative(body_html, 'text/html')
+    email.to = [email_to]
+    for attendee in attendees:
+        email.attach(
+            f'Ticket-{attendee.ticket.code}.pdf',
+            cairosvg.svg2pdf(bytestring=generate_ticket(attendee)),
+            'application/pdf',
+        )
+    email.send(fail_silently=settings.EMAIL_FAIL_SILENTY)
+    Ticket.objects.filter(attendee__in=attendees).update(sent=True)
 
 
 @shared_task

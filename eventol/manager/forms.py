@@ -46,6 +46,7 @@ from manager.models import (
     Software,
 )
 from manager.utils.forms import USE_POSTGRES
+from payments.models import SellerAccount
 
 logger = logging.getLogger('eventol')
 
@@ -523,6 +524,9 @@ class EventForm(ModelForm):
             'tz_event',
             'limit_proposal_date',
             'registration_closed',
+            'is_paid',
+            'ticket_price',
+            'ticket_quota',
             'email',
             'external_url',
             'abstract',
@@ -560,7 +564,20 @@ class EventForm(ModelForm):
             )
         elif not use_proposals:
             cleaned_data['limit_proposal_date'] = datetime.date.today()
+        if cleaned_data.get('is_paid'):
+            self.validate_paid_event(cleaned_data)
         return cleaned_data
+
+    def validate_paid_event(self, cleaned_data):
+        ticket_price = cleaned_data.get('ticket_price')
+        if not ticket_price or ticket_price <= 0:
+            self.add_error('ticket_price', _('A paid event needs a ticket price greater than 0'))
+        # The linked Mercado Pago account (mp_link_seller) receives the payments of every event
+        if not SellerAccount.objects.exists():
+            self.add_error(
+                'is_paid',
+                _('There is no Mercado Pago account linked to receive the payments'),
+            )
 
 
 class LoginForm(AllAuthLoginForm):
