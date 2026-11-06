@@ -4,6 +4,9 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.utils.translation import gettext as _
 
+from manager.models import Attendee, Ticket
+from manager.views import generate_ticket
+
 
 def get_activity_subject(event_name):
     return _('New information about your talk in the {event_name} event').format(
@@ -158,11 +161,6 @@ def send_order_tickets_email(event_name, buyer_name, email_to, attendee_ids):
     Receives the attendee ids instead of the SVG images (see send_ticket_email) and generates the
     tickets here, so it can run in celery.
     """
-    # manager.views imports this module
-    # pylint: disable=import-outside-toplevel
-    from manager.models import Attendee, Ticket  # noqa: PLC0415
-    from manager.views import generate_ticket  # noqa: PLC0415
-
     attendees = Attendee.objects.filter(pk__in=attendee_ids).select_related('ticket')
     email = EmailMultiAlternatives()
     email.subject = get_ticket_subject(event_name)
