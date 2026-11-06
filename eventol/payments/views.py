@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_POST
 from manager.models import Event
 from manager.views import update_event_info
 from payments import domain, services
-from payments.forms import BuyerForm, TicketQuantityForm, attendee_formset
+from payments.forms import BuyerForm, TicketSelectionForm, attendee_formset
 from payments.models import Order, SellerAccountNotConfiguredError, WebhookEvent
 from payments.tasks import dispatch_webhook_event
 
@@ -101,7 +101,7 @@ def _buyer_initial(user):
 
 
 def purchase(request, event_slug):
-    """Buy tickets of a paid event: choose the quantity, then the buyer and attendees data."""
+    """Buy tickets of a paid event: choose how many of each type, then the attendees data."""
     event = get_object_or_404(Event, event_slug=event_slug)
     if not event.is_paid:
         return redirect(reverse('attendee_registration', args=[event_slug]))
@@ -112,25 +112,28 @@ def purchase(request, event_slug):
             update_event_info(event_slug, event=event),
         )
 
-    available = domain.available_quota(event, event.ticket_quota)
-    render_dict = {'available': available, 'unit_price': event.ticket_price}
-    if available == 0:
+    ticket_types = list(event.ticket_types.all())
+    availability = domain.availability(event)
+    render_dict = {'ticket_types': ticket_types, 'sold_out': availability.sold_out}
+    if not ticket_types or availability.sold_out:
         return render(request, 'payments/purchase.html', update_event_info(event_slug, render_dict))
 
-    quantity_kwargs = {} if available is None else {'max_quantity': available}
-    quantity_form = TicketQuantityForm(
-        request.GET if 'quantity' in request.GET else None, **quantity_kwargs
+    chosen = any(key.startswith('type_') for key in request.GET)
+    selection_form = TicketSelectionForm(
+        request.GET if chosen else None,
+        ticket_types=ticket_types,
+        availability=availability,
     )
-    if not quantity_form.is_valid():
-        render_dict['quantity_form'] = quantity_form
+    if not selection_form.is_valid():
+        render_dict['selection_form'] = selection_form
         return render(request, 'payments/purchase.html', update_event_info(event_slug, render_dict))
 
-    quantity = quantity_form.cleaned_data['quantity']
+    tickets = selection_form.tickets()
     data = request.POST or None
     buyer_form = BuyerForm(data, initial=_buyer_initial(request.user))
     # The formset class is built by formset_factory: pylint does not see its __init__
     # pylint: disable-next=unexpected-keyword-arg
-    formset = attendee_formset(quantity)(data, event=event, prefix='attendees')
+    formset = attendee_formset(len(tickets))(data, event=event, tickets=tickets, prefix='attendees')
     if request.method == 'POST':
         if buyer_form.is_valid() and formset.is_valid():
             order = _create_order(request, event, buyer_form, formset)
@@ -141,13 +144,26 @@ def purchase(request, event_slug):
 
     render_dict.update(
         {
-            'quantity': quantity,
-            'total': event.ticket_price * quantity,
+            'selection_query': request.GET.urlencode(),
+            'summary': _selection_summary(tickets),
+            'quantity': len(tickets),
+            'total': sum(ticket_type.price for ticket_type in tickets),
             'buyer_form': buyer_form,
             'formset': formset,
         }
     )
     return render(request, 'payments/purchase.html', update_event_info(event_slug, render_dict))
+
+
+def _selection_summary(tickets):
+    """(ticket type, quantity, subtotal) of the chosen tickets."""
+    summary = {}
+    for ticket_type in tickets:
+        summary[ticket_type] = summary.get(ticket_type, 0) + 1
+    return [
+        (ticket_type, quantity, ticket_type.price * quantity)
+        for ticket_type, quantity in summary.items()
+    ]
 
 
 def _create_order(request, event, buyer_form, formset):
@@ -157,9 +173,11 @@ def _create_order(request, event, buyer_form, formset):
         phone=buyer_form.cleaned_data['phone'],
         user=request.user,
     )
-    attendees = [domain.AttendeeData(**form.cleaned_data) for form in formset]
+    attendees = [
+        domain.AttendeeData(**form.cleaned_data, ticket_type=form.ticket_type) for form in formset
+    ]
     try:
-        return domain.create_order(event, buyer, attendees, event.ticket_price, event.ticket_quota)
+        return domain.create_order(event, buyer, attendees)
     except domain.QuotaExceededError:
         messages.error(request, _('There are not enough tickets left'))
     except (SellerAccountNotConfiguredError, services.MercadoPagoError):

@@ -163,14 +163,14 @@ class Event(models.Model):
         default=False,
         help_text=_('Attendees buy their tickets'),
     )
-    ticket_price = models.DecimalField(
-        _('Ticket price'), max_digits=10, decimal_places=2, blank=True, null=True
-    )
     ticket_quota = models.PositiveIntegerField(
-        _('Ticket quota'),
+        _('Capacity'),
         blank=True,
         null=True,
-        help_text=_('Maximum number of tickets for sale. Leave empty for no limit'),
+        help_text=_(
+            'Maximum number of tickets for sale, adding all the ticket types. '
+            'Leave empty for no limit'
+        ),
     )
 
     tags = models.ManyToManyField(
@@ -335,6 +335,10 @@ class Event(models.Model):
     def location(self):
         return self.place
 
+    @property
+    def min_ticket_price(self):
+        return self.ticket_types.aggregate(price=models.Min('price'))['price']
+
     class Meta:
         ordering = ['name']
         verbose_name = _('Event')
@@ -351,6 +355,40 @@ class Event(models.Model):
         if self.image and self.cropping:
             self.get_cropping_image(generate=True)
         super().save(*args, **kwargs)
+
+
+class TicketType(models.Model):
+    event = models.ForeignKey(
+        Event, verbose_name=_('Event'), related_name='ticket_types', on_delete=models.CASCADE
+    )
+    name = models.CharField(_('Name'), max_length=100, help_text=_('For example: General, VIP'))
+    price = models.DecimalField(_('Price'), max_digits=10, decimal_places=2)
+    quota = models.PositiveIntegerField(
+        _('Quota'),
+        blank=True,
+        null=True,
+        help_text=_('Maximum number of tickets of this type. Leave empty for no limit'),
+    )
+
+    class Meta:
+        ordering = ['price', 'pk']
+        verbose_name = _('Ticket type')
+        verbose_name_plural = _('Ticket types')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['event', 'name'],
+                name='unique_ticket_type_name_by_event',
+                violation_error_message=_('There is already a ticket type with this name'),
+            ),
+            models.CheckConstraint(
+                check=models.Q(price__gt=0),
+                name='ticket_type_price_gt_0',
+                violation_error_message=_('The price must be greater than 0'),
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.event} - {self.name}'
 
 
 class EventDate(models.Model):
@@ -721,6 +759,13 @@ class Attendee(models.Model):
     ticket = models.ForeignKey(
         Ticket, verbose_name=_('Ticket'), blank=True, null=True, on_delete=models.CASCADE
     )
+    ticket_type = models.ForeignKey(
+        TicketType,
+        verbose_name=_('Ticket type'),
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
     is_installing = models.BooleanField(_('Is going to install?'), default=False)
     additional_info = models.CharField(
         _('Additional Info'),
@@ -792,6 +837,7 @@ class Attendee(models.Model):
             'event': self.event,
             'event_date': date,
             'ticket': self.ticket,
+            'ticket_type': self.ticket_type,
         }
 
     @property

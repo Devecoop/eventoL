@@ -8,7 +8,7 @@ import pytest
 from cryptography.fernet import Fernet
 from django.utils import timezone
 
-from manager.models import Event
+from manager.models import Event, TicketType
 from payments.models import SellerAccount
 from payments.services import PreferenceResult
 
@@ -46,6 +46,16 @@ def event(db):  # pylint: disable=unused-argument
         abstract='Fest',
         limit_proposal_date=timezone.localdate(),
     )
+
+
+@pytest.fixture
+def general(event):
+    return TicketType.objects.create(event=event, name='General', price='1000')
+
+
+@pytest.fixture
+def vip(event):
+    return TicketType.objects.create(event=event, name='VIP', price='3000', quota=2)
 
 
 @pytest.fixture

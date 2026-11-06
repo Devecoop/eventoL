@@ -19,23 +19,46 @@ def test_build_sdk_without_token_never_works():
 
 
 @pytest.mark.django_db
-def test_create_preference_body(event, seller):
+def test_create_preference_body(event, seller, general, vip):
+    general.price = '1500.50'
+    general.save()
     buyer = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
-    people = [domain.AttendeeData(first_name='Ana', last_name='Garcia', dni='30000000')] * 2
+    people = [
+        domain.AttendeeData(
+            first_name='Ana', last_name='Garcia', dni='30000000', ticket_type=general
+        ),
+        domain.AttendeeData(
+            first_name='Beto', last_name='Garcia', dni='30000001', ticket_type=general
+        ),
+        domain.AttendeeData(first_name='Caro', last_name='Garcia', dni='30000002', ticket_type=vip),
+    ]
     sdk = mock.Mock()
     sdk.preference.return_value.create.return_value = {
         'status': 201,
         'response': {'id': 'pref-1', 'init_point': 'https://mp.test/checkout'},
     }
     with mock.patch('payments.services._build_sdk', return_value=sdk) as build_sdk:
-        order = domain.create_order(event, buyer, people, '1500.50')
+        order = domain.create_order(event, buyer, people)
 
     build_sdk.assert_called_once_with('seller-access-token')
     body = sdk.preference.return_value.create.call_args.args[0]
-    assert body['items'][0]['quantity'] == 2
-    assert body['items'][0]['unit_price'] == 1500.5
-    assert body['items'][0]['currency_id'] == 'ARS'
-    assert body['marketplace_fee'] == 90.03
+    assert body['items'] == [
+        {
+            'id': str(general.pk),
+            'title': 'Test Fest - General',
+            'quantity': 2,
+            'currency_id': 'ARS',
+            'unit_price': 1500.5,
+        },
+        {
+            'id': str(vip.pk),
+            'title': 'Test Fest - VIP',
+            'quantity': 1,
+            'currency_id': 'ARS',
+            'unit_price': 3000.0,
+        },
+    ]
+    assert body['marketplace_fee'] == 180.03
     assert body['external_reference'] == str(order.id)
     assert body['notification_url'] == (
         'https://eventol.test/payments/mercadopago/webhook?source_news=webhooks'

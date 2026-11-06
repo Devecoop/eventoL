@@ -44,8 +44,10 @@ from manager.models import (
     Installer,
     Room,
     Software,
+    TicketType,
 )
 from manager.utils.forms import USE_POSTGRES
+from payments.domain import ticket_type_has_sales
 from payments.models import SellerAccount
 
 logger = logging.getLogger('eventol')
@@ -483,6 +485,48 @@ class ContactMessageForm(ModelForm):
         widgets = {'message': forms.Textarea(attrs={'rows': 5})}
 
 
+class TicketTypeForm(ModelForm):
+    class Meta:
+        model = TicketType
+        fields = ['name', 'price', 'quota']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.has_sales = bool(self.instance.pk) and ticket_type_has_sales(self.instance)
+        if self.has_sales:
+            self.fields['price'].disabled = True
+            self.fields['price'].help_text = _('It has sales: the price cannot change')
+
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price is not None and price <= 0:
+            raise forms.ValidationError(_('The price must be greater than 0'))
+        return price
+
+
+class TicketTypeModelFormset(BaseModelFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        names = set()
+        for form in self.forms:
+            if not form.cleaned_data:
+                continue
+            if form.cleaned_data.get(DELETION_FIELD_NAME):
+                # Orders keep their ticket type (on_delete=PROTECT)
+                if form.instance.pk and form.instance.orderitem_set.exists():
+                    raise forms.ValidationError(
+                        _('The ticket type %(name)s has orders: it cannot be deleted')
+                        % {'name': form.instance.name}
+                    )
+                continue
+            name = form.cleaned_data['name'].strip().lower()
+            if name in names:
+                raise forms.ValidationError(_('Two ticket types have the same name'))
+            names.add(name)
+
+
 class EventDateForm(ModelForm):
     class Meta:
         model = EventDate
@@ -525,7 +569,6 @@ class EventForm(ModelForm):
             'limit_proposal_date',
             'registration_closed',
             'is_paid',
-            'ticket_price',
             'ticket_quota',
             'email',
             'external_url',
@@ -565,13 +608,10 @@ class EventForm(ModelForm):
         elif not use_proposals:
             cleaned_data['limit_proposal_date'] = datetime.date.today()
         if cleaned_data.get('is_paid'):
-            self.validate_paid_event(cleaned_data)
+            self.validate_paid_event()
         return cleaned_data
 
-    def validate_paid_event(self, cleaned_data):
-        ticket_price = cleaned_data.get('ticket_price')
-        if not ticket_price or ticket_price <= 0:
-            self.add_error('ticket_price', _('A paid event needs a ticket price greater than 0'))
+    def validate_paid_event(self):
         # The linked Mercado Pago account (mp_link_seller) receives the payments of every event
         if not SellerAccount.objects.exists():
             self.add_error(

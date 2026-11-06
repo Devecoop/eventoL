@@ -8,13 +8,56 @@ from manager.models import Attendee
 from payments.constants import MAX_TICKETS_PER_ORDER
 
 
-class TicketQuantityForm(forms.Form):
-    quantity = forms.TypedChoiceField(label=_('Tickets'), coerce=int)
+class TicketSelectionForm(forms.Form):
+    """How many tickets of each type: one field ``type_<id>`` by ticket type."""
 
-    def __init__(self, *args, max_quantity=MAX_TICKETS_PER_ORDER, **kwargs):
+    def __init__(self, *args, ticket_types, availability, **kwargs):
         super().__init__(*args, **kwargs)
-        max_quantity = min(max_quantity, MAX_TICKETS_PER_ORDER)
-        self.fields['quantity'].choices = [(n, n) for n in range(1, max_quantity + 1)]
+        self.availability = availability
+        for ticket_type in ticket_types:
+            remaining = availability.for_type(ticket_type.pk)
+            maximum = MAX_TICKETS_PER_ORDER if remaining is None else remaining
+            maximum = min(maximum, MAX_TICKETS_PER_ORDER)
+            field = forms.TypedChoiceField(
+                label=ticket_type.name,
+                choices=[(number, number) for number in range(maximum + 1)],
+                coerce=int,
+                empty_value=0,
+                widget=forms.Select(attrs={'class': 'form-control'}),
+                required=False,
+                initial=0,
+            )
+            field.ticket_type = ticket_type
+            field.remaining = remaining
+            self.fields[self.field_name(ticket_type)] = field
+
+    @staticmethod
+    def field_name(ticket_type):
+        return f'type_{ticket_type.pk}'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        counts = {
+            field.ticket_type.pk: cleaned_data.get(name) or 0 for name, field in self.fields.items()
+        }
+        total = sum(counts.values())
+        if total == 0:
+            raise forms.ValidationError(_('Choose at least one ticket'))
+        if total > MAX_TICKETS_PER_ORDER:
+            raise forms.ValidationError(
+                _('You can buy up to %(max)s tickets by order') % {'max': MAX_TICKETS_PER_ORDER}
+            )
+        if not self.availability.fits(counts):
+            raise forms.ValidationError(_('There are not enough tickets left'))
+        return cleaned_data
+
+    def tickets(self):
+        """The ticket type of each ticket of the order, in the order they are shown."""
+        return [
+            field.ticket_type
+            for name, field in self.fields.items()
+            for _number in range(self.cleaned_data.get(name) or 0)
+        ]
 
 
 class BuyerForm(forms.Form):
@@ -34,6 +77,10 @@ class AttendeeForm(forms.Form):
         help_text=_('Optional: the attendee also receives the ticket'),
     )
 
+    def __init__(self, *args, ticket_type=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ticket_type = ticket_type
+
     def clean_dni(self):
         dni = re.sub(r'[\s.-]', '', self.cleaned_data['dni'])
         if not dni.isalnum():
@@ -42,9 +89,16 @@ class AttendeeForm(forms.Form):
 
 
 class BaseAttendeeFormSet(forms.BaseFormSet):
-    def __init__(self, *args, event, **kwargs):
+    def __init__(self, *args, event, tickets, **kwargs):
         self.event = event
+        self.tickets = tickets
         super().__init__(*args, **kwargs)
+
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        if index is not None and index < len(self.tickets):
+            kwargs['ticket_type'] = self.tickets[index]
+        return kwargs
 
     def clean(self):
         if any(self.errors):

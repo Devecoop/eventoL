@@ -15,10 +15,14 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def order(event, seller, preference):
+def order(event, seller, preference, general):
     buyer = domain.Buyer(name='Ana Garcia', email='ana@example.com', phone='1122334455')
-    people = [domain.AttendeeData(first_name='Ana', last_name='Garcia', dni='30000000')]
-    return domain.create_order(event, buyer, people, '1000')
+    people = [
+        domain.AttendeeData(
+            first_name='Ana', last_name='Garcia', dni='30000000', ticket_type=general
+        )
+    ]
+    return domain.create_order(event, buyer, people)
 
 
 def notify(client, payment_id='1001', request_id='req-1', signature=None):

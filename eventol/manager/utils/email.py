@@ -2,6 +2,7 @@ import cairosvg
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.utils.html import escape
 from django.utils.translation import gettext as _
 
 from manager.models import Attendee, Ticket
@@ -70,23 +71,35 @@ def get_ticket_body(first_name, last_name, event_name):
     return (body_txt, body_html)
 
 
-def get_order_tickets_body(buyer_name, event_name, quantity):
+def get_order_tickets_body(buyer_name, event_name, quantity, summary=()):
+    """``summary`` has one line by ticket, for example "Ana Garcia - VIP"."""
+    summary_txt = ''.join(f'- {line}\n' for line in summary)
+    summary_html = ''.join(f'<li>{escape(line)}</li>' for line in summary)
+    if summary_html:
+        summary_html = f'<ul>{summary_html}</ul>\n'
     body_txt = _(
         'Hello {buyer_name},\n'
         'Thank you for your purchase! Here are your {quantity} ticket(s) for {event_name} event.\n'
+        '{summary}'
         'Please remember to print them and bring them with you the day(s) of the event.\n'
         'Regards,\n'
         '{event_name} and eventoL team'
-    ).format(buyer_name=buyer_name, event_name=event_name, quantity=quantity)
+    ).format(buyer_name=buyer_name, event_name=event_name, quantity=quantity, summary=summary_txt)
     body_html = _(
         '<p>Hello {buyer_name},</p><br />\n'
         '<p>Thank you for your purchase! Here are your {quantity} ticket(s) for {event_name} event.'
         '</p>\n'
+        '{summary}'
         '<p>Please remember to <em>print them and bring them with you</em> the day(s) of the event.'
         '</p>\n'
         '<p>Regards,</p>\n'
         '<p>{event_name} and <em>eventoL</em> team</p>'
-    ).format(buyer_name=buyer_name, event_name=event_name, quantity=quantity)
+    ).format(
+        buyer_name=escape(buyer_name),
+        event_name=escape(event_name),
+        quantity=quantity,
+        summary=summary_html,
+    )
     return (body_txt, body_html)
 
 
@@ -154,6 +167,13 @@ def send_ticket_email(ticket_data, ticket_svg):
     email.send(fail_silently=settings.EMAIL_FAIL_SILENTY)
 
 
+def _ticket_line(attendee):
+    line = f'{attendee.first_name} {attendee.last_name} ({attendee.dni})'
+    if attendee.ticket_type is not None:
+        line = f'{line} - {attendee.ticket_type.name}'
+    return line
+
+
 @shared_task
 def send_order_tickets_email(event_name, buyer_name, email_to, attendee_ids):
     """Send every ticket of a purchase to the buyer in one e-mail.
@@ -161,10 +181,15 @@ def send_order_tickets_email(event_name, buyer_name, email_to, attendee_ids):
     Receives the attendee ids instead of the SVG images (see send_ticket_email) and generates the
     tickets here, so it can run in celery.
     """
-    attendees = Attendee.objects.filter(pk__in=attendee_ids).select_related('ticket')
+    attendees = (
+        Attendee.objects.filter(pk__in=attendee_ids)
+        .select_related('ticket', 'ticket_type')
+        .order_by('pk')
+    )
     email = EmailMultiAlternatives()
     email.subject = get_ticket_subject(event_name)
-    body_txt, body_html = get_order_tickets_body(buyer_name, event_name, len(attendees))
+    summary = [_ticket_line(attendee) for attendee in attendees]
+    body_txt, body_html = get_order_tickets_body(buyer_name, event_name, len(attendees), summary)
     email.body = body_txt
     email.attach_alternative(body_html, 'text/html')
     email.to = [email_to]

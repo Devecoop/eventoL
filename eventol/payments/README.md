@@ -30,7 +30,7 @@ Sin credenciales, las operaciones fallan: **nunca** se aprueba un pago sin Merca
 3. Reconciliación periódica (pagos cuyo webhook no llegó + renovación del token):
    - **cron:** `python manage.py sync_mp_orders`, por ejemplo cada 15 minutos;
    - **celery beat:** la tarea `payments.tasks.reconcile_pending_orders_task`.
-4. Prueba en sandbox sin formulario: `python manage.py mp_create_test_order --event <slug> --price 1000 --qty 2`. Imprime la URL de pago.
+4. Prueba en sandbox sin formulario: `python manage.py mp_create_test_order --event <slug> --qty 2 [--type VIP]`. Usa un tipo de entrada del evento (por defecto, el más barato) e imprime la URL de pago.
    - Para recibir webhooks en local, exponer el servidor con un túnel (cloudflared/ngrok) y apuntar `MP_BASE_URL` a la URL del túnel.
 
 ## Modelo
@@ -39,14 +39,14 @@ Sin credenciales, las operaciones fallan: **nunca** se aprueba un pago sin Merca
 - `Order`: el UUID es el `external_reference` en MP.
   - Estados: `pending` → `approved` | `approved_over_quota` → `refunded`.
   - Los intentos rechazados no cambian el estado de la orden: el comprador puede reintentar.
-- `OrderItem`: una entrada nominativa (nombre, apellido, DNI, email opcional).
+- `OrderItem`: una entrada nominativa (nombre, apellido, DNI, email opcional), con su tipo de entrada y el precio al que se vendió.
 - `Payment`: cada pago de MP de la orden. `validation_error` se completa si monto, moneda o collector no coinciden; ese pago nunca aprueba la orden.
 - `WebhookEvent`: auditoría de notificaciones. Se deduplican por `x-request-id`.
 
 ## Flujo
 
-1. `domain.create_order(event, buyer, attendees, unit_price, quota)`:
-   - bloquea el evento y valida el cupo (pagadas + pendientes con reserva vigente);
+1. `domain.create_order(event, buyer, attendees)` (cada asistente con su `ticket_type`):
+   - bloquea el evento y valida el cupo de cada tipo y el aforo del evento (pagadas + pendientes con reserva vigente; `domain.availability`);
    - crea la orden y la preferencia, y deja en `order.init_point` la URL de pago.
 2. MP notifica a `POST /payments/mercadopago/webhook`:
    - se valida la firma y se guarda el `WebhookEvent`;
@@ -57,17 +57,18 @@ Sin credenciales, las operaciones fallan: **nunca** se aprueba un pago sin Merca
 
 ## Integración
 
-- **Evento:** `Event.is_paid`, `ticket_price` y `ticket_quota` (cupo opcional). `EventForm` no deja marcar un evento como pago sin precio o sin una `SellerAccount` vinculada.
+- **Evento:** `Event.is_paid` y `ticket_quota` (aforo total opcional). `EventForm` no deja marcar un evento como pago sin una `SellerAccount` vinculada.
+- **Tipos de entrada:** `TicketType` (nombre, precio > 0 y cupo opcional), cargados en la sección "Tickets" del formulario del evento. Un tipo con ventas no cambia de precio, y uno con órdenes no se puede borrar. Un evento pago sin tipos muestra "Entradas próximamente".
 - **Compra:** `payments.views.purchase` (`/events/<slug>/purchase`, nombre `event_purchase`):
-  - primero se elige la cantidad (hasta 10 y hasta el cupo disponible);
+  - primero se elige cuántas entradas de cada tipo (hasta 10 en total, y hasta el cupo del tipo y el aforo);
   - después se cargan el comprador (con captcha) y los N asistentes (nombre, apellido, DNI y email opcional);
   - se rechazan los DNIs repetidos en la orden o que ya tienen entrada en el evento;
   - `create_order` y redirección a `order.init_point`.
 - **Registro gratuito:** en un evento pago, `/registration` y los enlaces de registro llevan a la compra y el autoregistro con QR se desactiva. La carga por colaboradores sigue disponible (invitaciones).
 - **Receivers** en `manager/receivers.py`; las dos señales se envían después del commit, con el argumento `order`:
-  - `order_paid` crea un `Attendee` (con DNI) y su `Ticket` por `OrderItem`. Envía un mail al comprador con todas las entradas, y a cada asistente con email propio la suya. Si un DNI ya tiene entrada, ese ítem no se emite y queda en el log para revisarlo a mano.
+  - `order_paid` crea un `Attendee` (con DNI y tipo de entrada) y su `Ticket` por `OrderItem`. Envía un mail al comprador con todas las entradas y el detalle por tipo, y a cada asistente con email propio la suya. Si un DNI ya tiene entrada, ese ítem no se emite y queda en el log para revisarlo a mano.
   - `order_refunded` anula los tickets (`Ticket.cancelled`). El escáner y la búsqueda de asistencia no registran el ingreso de un ticket anulado.
-- **Unicidad de asistentes:** el DNI es único por evento (cuando existe). El email se valida en los formularios del registro gratuito.
+- **Unicidad de asistentes:** el DNI es único por evento (cuando existe). Sin DNI (registro gratuito), el email es único por evento: lo validan `Attendee.clean()` y un constraint condicional en la base.
 
 ## Tests
 

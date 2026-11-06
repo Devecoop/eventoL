@@ -68,6 +68,8 @@ from manager.forms import (
     InstallerRegistrationForm,
     RejectForm,
     RoomForm,
+    TicketTypeForm,
+    TicketTypeModelFormset,
 )
 from manager.models import (
     Activity,
@@ -88,6 +90,7 @@ from manager.models import (
     Organizer,
     Reviewer,
     Room,
+    TicketType,
 )
 from manager.security import (
     add_attendance_permission,
@@ -106,6 +109,14 @@ from manager.utils import email as utils_email
 from manager.utils.report import count_by
 
 logger = logging.getLogger('eventol')
+
+
+def with_ticket_type(message, attendee):
+    """Add the ticket type to an attendance message, so the staff sees it when scanning."""
+    ticket_type = getattr(attendee, 'ticket_type', None)
+    if ticket_type is None:
+        return message
+    return f'{message} ({ticket_type.name})'
 
 
 # Auxiliary functions
@@ -132,7 +143,10 @@ def generate_ticket(user):
     ticket_template.set_text('event_place_name', '')
     ticket_template.set_text('event_place_address', '')
 
-    ticket_template.set_text('ticket_type', str(_('General Ticket')))
+    ticket_type = ticket_data.get('ticket_type')
+    ticket_template.set_text(
+        'ticket_type', ticket_type.name[:30] if ticket_type else str(_('General Ticket'))
+    )
     qr_code = pyqrcode.create(str(ticket_data['ticket']))
     code = io.BytesIO()
     qr_code.png(code, scale=7, quiet_zone=0)
@@ -294,7 +308,10 @@ def manage_attendance(request, event_slug):
                     return redirect(reverse('manage_attendance', args=[event_slug]))
                 if attendee.attended_today:
                     messages.success(
-                        request, _('The attendee has already been registered correctly.')
+                        request,
+                        with_ticket_type(
+                            _('The attendee has already been registered correctly.'), attendee
+                        ),
                     )
                 else:
                     attendance_date = AttendeeAttendanceDate()
@@ -302,7 +319,11 @@ def manage_attendance(request, event_slug):
                     attendance_date.mode = '3'
                     attendance_date.save()
                     messages.success(
-                        request, _('The attendee has been successfully registered. Happy Hacking!')
+                        request,
+                        with_ticket_type(
+                            _('The attendee has been successfully registered. Happy Hacking!'),
+                            attendee,
+                        ),
                     )
                     return redirect(reverse('manage_attendance', args=[event_slug]))
         if collaborator_form.is_valid():
@@ -349,7 +370,12 @@ def attendance_by_ticket(request, event_slug, ticket_code):
         if attendee.ticket is not None and attendee.ticket.cancelled:
             messages.error(request, _(CANCELLED_TICKET_MESSAGE))
         elif attendee.attended_today:
-            messages.success(request, _('The attendee has already been registered correctly.'))
+            messages.success(
+                request,
+                with_ticket_type(
+                    _('The attendee has already been registered correctly.'), attendee
+                ),
+            )
         else:
             if hasattr(attendee, 'user'):
                 attendance_date = EventUserAttendanceDate()
@@ -360,7 +386,10 @@ def attendance_by_ticket(request, event_slug, ticket_code):
             attendance_date.mode = '2'
             attendance_date.save()
             messages.success(
-                request, _('The attendee has been successfully registered. Happy Hacking!')
+                request,
+                with_ticket_type(
+                    _('The attendee has been successfully registered. Happy Hacking!'), attendee
+                ),
             )
     else:
         messages.error(request, _("The user isn't registered for this event."))
@@ -695,11 +724,19 @@ def attendance_by_autoreadqr(request, event_slug):
             if attendee.ticket.cancelled:
                 messages.error(request, _(CANCELLED_TICKET_MESSAGE))
             elif attendance.exists():
-                messages.info(request, _('You are already registered and present! Go have fun'))
+                messages.info(
+                    request,
+                    with_ticket_type(
+                        _('You are already registered and present! Go have fun'), attendee
+                    ),
+                )
             else:
                 AttendeeAttendanceDate.objects.create(attendee=attendee, mode='2')
                 messages.success(
-                    request, _('You are now marked as present in the event, have fun!')
+                    request,
+                    with_ticket_type(
+                        _('You are now marked as present in the event, have fun!'), attendee
+                    ),
                 )
         else:
             messages.error(request, _('The ticket code is not valid for this event'))
@@ -1107,10 +1144,16 @@ def create_event(request):
     event_date_formset = event_date_formset(
         request.POST or None, prefix='event-date-form', queryset=EventDate.objects.none()
     )
+    ticket_types_formset = _ticket_types_formset(request, TicketType.objects.none())
     # pylint: enable=unexpected-keyword-arg
 
     if request.POST:
-        if event_form.is_valid() and contacts_formset.is_valid() and event_date_formset.is_valid():
+        if (
+            event_form.is_valid()
+            and contacts_formset.is_valid()
+            and event_date_formset.is_valid()
+            and ticket_types_formset.is_valid()
+        ):
             event_user = None
             the_event = None
             contacts = None
@@ -1130,6 +1173,10 @@ def create_event(request):
                     event_date.event = the_event
                     event_date.save()
 
+                for ticket_type in ticket_types_formset.save(commit=False):
+                    ticket_type.event = the_event
+                    ticket_type.save()
+
                 return redirect(reverse('event_add_image', args=[the_event.event_slug]))
 
         messages.error(
@@ -1145,11 +1192,19 @@ def create_event(request):
             'contacts_formset': contacts_formset,
             'fields_dependencies': Event.get_fields_dependencies(),
             'event_date_formset': event_date_formset,
+            'ticket_types_formset': ticket_types_formset,
         },
     )
 
 
 # pylint: enable=too-many-branches
+
+
+def _ticket_types_formset(request, queryset):
+    formset = modelformset_factory(
+        TicketType, form=TicketTypeForm, formset=TicketTypeModelFormset, can_delete=True
+    )
+    return formset(request.POST or None, prefix='ticket-types-form', queryset=queryset)
 
 
 @login_required
@@ -1175,10 +1230,16 @@ def edit_event(request, event_slug):
         prefix='event-date-form',
         queryset=EventDate.objects.filter(event=event),
     )
+    ticket_types_formset = _ticket_types_formset(request, event.ticket_types.all())
     # pylint: enable=unexpected-keyword-arg
 
     if request.POST:
-        if event_form.is_valid() and contacts_formset.is_valid() and event_date_formset.is_valid():
+        if (
+            event_form.is_valid()
+            and contacts_formset.is_valid()
+            and event_date_formset.is_valid()
+            and ticket_types_formset.is_valid()
+        ):
             try:
                 the_event = event_form.save()
                 contacts = contacts_formset.save(commit=False)
@@ -1192,6 +1253,12 @@ def edit_event(request, event_slug):
 
                 contacts_formset.save()
                 event_date_formset.save()
+
+                for ticket_type in ticket_types_formset.save(commit=False):
+                    ticket_type.event = the_event
+                    ticket_type.save()
+                for ticket_type in ticket_types_formset.deleted_objects:
+                    ticket_type.delete()
 
                 return redirect(reverse('index', args=[the_event.event_slug]))
             except Exception as error_message:
@@ -1211,6 +1278,7 @@ def edit_event(request, event_slug):
                 'protocol': request.scheme,
                 'contacts_formset': contacts_formset,
                 'event_date_formset': event_date_formset,
+                'ticket_types_formset': ticket_types_formset,
                 'fields_dependencies': Event.get_fields_dependencies(),
             },
         ),

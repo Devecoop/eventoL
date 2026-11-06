@@ -88,20 +88,32 @@ def order_status_url(order):
 # Checkout Pro
 
 
+def preference_items(order):
+    """One preference item by ticket type (and price) of the order."""
+    groups = {}
+    for item in order.items.select_related('ticket_type'):
+        key = (item.ticket_type_id, item.unit_price)
+        if key not in groups:
+            title = str(order.event.name)
+            if item.ticket_type is not None:
+                title = f'{title} - {item.ticket_type.name}'
+            groups[key] = {
+                'id': str(item.ticket_type_id or order.event_id),
+                'title': title[:250],
+                'quantity': 0,
+                'currency_id': order.currency,
+                'unit_price': _amount(item.unit_price),
+            }
+        groups[key]['quantity'] += 1
+    return list(groups.values())
+
+
 def create_preference(order, access_token):
     """Create the checkout preference of an order with the seller token and the marketplace fee."""
     sdk = _build_sdk(access_token)
     back_url = order_status_url(order)
     body = {
-        'items': [
-            {
-                'id': str(order.event_id),
-                'title': str(order.event.name)[:250],
-                'quantity': order.quantity,
-                'currency_id': order.currency,
-                'unit_price': _amount(order.unit_price),
-            }
-        ],
+        'items': preference_items(order),
         'payer': {'name': order.buyer_name, 'email': order.buyer_email},
         'external_reference': order.external_reference,
         'marketplace_fee': _amount(order.marketplace_fee),

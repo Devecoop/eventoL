@@ -18,7 +18,7 @@ class ReadOnlyAdminMixin:
 
 class OrderItemInline(ReadOnlyAdminMixin, admin.TabularInline):
     model = OrderItem
-    fields = ('first_name', 'last_name', 'dni', 'email', 'attendee')
+    fields = ('first_name', 'last_name', 'dni', 'email', 'ticket_type', 'unit_price', 'attendee')
     readonly_fields = fields
     extra = 0
 

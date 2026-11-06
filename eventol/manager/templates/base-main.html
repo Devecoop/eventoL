@@ -74,7 +74,13 @@
                     {% if not user.is_authenticated or not user|is_registered_any_way:event_slug %}
                         <li>
                             {% if event.is_paid %}
-                                <a title="Buy tickets" href="{% url "event_purchase" event_slug %}">{% blocktrans with price=event.ticket_price %}Buy tickets (ARS {{ price }}){% endblocktrans %}</a>
+                                {% with price=event.min_ticket_price %}
+                                    {% if price %}
+                                        <a title="Buy tickets" href="{% url "event_purchase" event_slug %}">{% blocktrans %}Tickets from ARS {{ price }}{% endblocktrans %}</a>
+                                    {% else %}
+                                        <a title="Tickets coming soon" href="{% url "event_purchase" event_slug %}">{% trans "Tickets coming soon" %}</a>
+                                    {% endif %}
+                                {% endwith %}
                             {% else %}
                                 <a title="Register to this event" href="{% url "attendee_registration" event_slug %}">{% trans "Check in" %}</a>
                             {% endif %}
