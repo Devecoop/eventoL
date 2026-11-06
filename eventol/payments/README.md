@@ -68,7 +68,7 @@ Sin credenciales, las operaciones fallan: **nunca** se aprueba un pago sin Merca
 - **Receivers** en `manager/receivers.py`; las dos señales se envían después del commit, con el argumento `order`:
   - `order_paid` crea un `Attendee` (con DNI y tipo de entrada) y su `Ticket` por `OrderItem`. Envía un mail al comprador con todas las entradas y el detalle por tipo, y a cada asistente con email propio la suya. Si un DNI ya tiene entrada, ese ítem no se emite y queda en el log para revisarlo a mano.
   - `order_refunded` anula los tickets (`Ticket.cancelled`). El escáner y la búsqueda de asistencia no registran el ingreso de un ticket anulado.
-- **Unicidad de asistentes:** el DNI es único por evento (cuando existe). El email se valida en los formularios del registro gratuito.
+- **Unicidad de asistentes:** el DNI es único por evento (cuando existe). Sin DNI (registro gratuito), el email es único por evento: lo validan `Attendee.clean()` y un constraint condicional en la base.
 
 ## Tests
 
